@@ -1,0 +1,19 @@
+# Virtual env
+venv/
+.env
+.env.*
+!.env.example
+
+# Caches
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Local storage/artifacts
+storage/
+voice_cache/
+
+# Logs
+*.log

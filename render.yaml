@@ -1,0 +1,70 @@
+services:
+  - type: web
+    name: lucid-learn-app
+    env: static
+    rootDir: app
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: EXPO_PUBLIC_API_HOST
+        value: ${BACKEND_HOST}
+      - key: EXPO_PUBLIC_WORKOS_CLIENT_ID
+        sync: false
+      - key: EXPO_PUBLIC_WORKOS_BASE_URL
+        value: https://${BACKEND_HOST}
+      - key: EXPO_PUBLIC_WORKOS_REDIRECT_URI
+        value: https://${RENDER_EXTERNAL_HOSTNAME}/auth/callback
+
+  - type: web
+    name: lucid-learn-server
+    env: node
+    rootDir: server
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start:prod
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: PORT
+        value: 3001
+      - key: DATABASE_URL
+        sync: false
+      - key: REQUEST_TIMEOUT
+        value: 120000
+      - key: QNA_SERVICE_URL
+        value: https://${RENDER_EXTERNAL_HOSTNAME_QNA}
+      - key: SLIDE_ORCHESTRATOR_URL
+        value: https://${RENDER_EXTERNAL_HOSTNAME_ORCH}
+      - key: AI_TEACHER_URL
+        value: https://${RENDER_EXTERNAL_HOSTNAME_ORCH}
+      - key: CORS_ORIGIN
+        value: https://${RENDER_EXTERNAL_HOSTNAME_APP}
+
+  - type: web
+    name: lucid-qna
+    env: python
+    rootDir: python_services/qna_agent_service
+    buildCommand: pip install -r ../requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --workers 2
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PERPLEXITY_API_KEY
+        sync: false
+      - key: ALLOW_FALLBACK
+        value: "false"
+
+  - type: web
+    name: lucid-orchestrator
+    env: python
+    rootDir: python_services
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn slide_orchestrator.api_server:app --host 0.0.0.0 --port $PORT --workers 2
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: PYTHONUNBUFFERED
+        value: "1"
+

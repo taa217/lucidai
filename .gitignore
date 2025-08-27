@@ -9,12 +9,17 @@ yarn-error.log*
 # Build output
 dist/
 build/
+app/dist/
+server/dist/
+web-build/
 *.js.map
 
 # Environment variables
 .env
 .env.*
 !.env.example
+server/.env
+python_services/.env
 
 # IDEs and editors
 .idea/
@@ -45,10 +50,15 @@ __pycache__/
 .venv/
 venv/
 env/
+python_services/venv/
 
 # Python build artifacts
 *.egg-info/
 .eggs/
+python_services/**/__pycache__/
+python_services/**/*.pyc
+python_services/**/*.pyo
+.pytest_cache/
 
 # Other
 .project
@@ -65,3 +75,9 @@ app/android/app/build/
 
 # Metro bundler cache
 .metro-cache/ 
+
+# Data/Artifacts
+python_services/storage/
+storage/generated_images/
+storage/generated_audio/
+voice_cache/

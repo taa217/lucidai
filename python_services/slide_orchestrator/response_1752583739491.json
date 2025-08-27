@@ -1,0 +1,510 @@
+{
+  "messages": [],
+  "user_query": "I want to learn deep neural networks",
+  "learning_goal": "deep neural networks fundamentals",
+  "research_tasks": [
+    {
+      "id": "2f018340-0288-4876-a4b6-d969b0b13826",
+      "objective": "Collect authoritative sources for deep neural networks fundamentals",
+      "learning_goal": "deep neural networks fundamentals"
+    }
+  ],
+  "research_results": [],
+  "research_outputs": [
+    {
+      "status": "done",
+      "id": "f6d87620-8ed4-42a0-a780-734f952e603a",
+      "objective": "Collect authoritative sources for the fundamentals of deep neural networks",
+      "learning_goal": "the fundamentals of deep neural networks",
+      "completed_at": "2025-07-15T12:28:40.226983",
+      "research_method": "openai_deep_research",
+      "total_sources_found": 5,
+      "result": [
+        {
+          "title": "Neural Networks and Deep Learning | Coursera",
+          "url": "https://www.coursera.org/learn/neural-networks-deep-learning/?utm_source=openai",
+          "snippet": "([coursera.org](https://www.coursera.org/learn/neural-networks-deep-learning/?utm_source=openai))",
+          "relevance_score": 0.9,
+          "source_type": "research",
+          "search_query": "the fundamentals of deep neural networks"
+        },
+        {
+          "title": "Artificial Neural Network and Deep Learning: Fundamentals and Theory",
+          "url": "https://arxiv.org/abs/2408.16002?utm_source=openai",
+          "snippet": "([arxiv.org](https://arxiv.org/abs/2408.16002?utm_source=openai))",
+          "relevance_score": 0.9,
+          "source_type": "research",
+          "search_query": "the fundamentals of deep neural networks"
+        },
+        {
+          "title": "The Principles of Deep Learning Theory",
+          "url": "https://arxiv.org/abs/2106.10165?utm_source=openai",
+          "snippet": "([arxiv.org](https://arxiv.org/abs/2106.10165?utm_source=openai))",
+          "relevance_score": 0.9,
+          "source_type": "research",
+          "search_query": "the fundamentals of deep neural networks"
+        },
+        {
+          "title": "Deep Learning: An Introduction for Applied Mathematicians",
+          "url": "https://arxiv.org/abs/1801.05894?utm_source=openai",
+          "snippet": "([arxiv.org](https://arxiv.org/abs/1801.05894?utm_source=openai))",
+          "relevance_score": 0.9,
+          "source_type": "research",
+          "search_query": "the fundamentals of deep neural networks"
+        },
+        {
+          "title": "A Selective Overview of Deep Learning",
+          "url": "https://arxiv.org/abs/1904.05526?utm_source=openai",
+          "snippet": "([arxiv.org](https://arxiv.org/abs/1904.05526?utm_source=openai))",
+          "relevance_score": 0.9,
+          "source_type": "research",
+          "search_query": "the fundamentals of deep neural networks"
+        }
+      ],
+      "research_summary": "Deep neural networks (DNNs) are a class of machine learning models inspired by the human brain's structure and function. They consist of multiple layers of interconnected nodes (neurons) that process data hierarchically, enabling the modeling of complex patterns and representations.\n\n**Key Components of Deep Neural Networks:**\n\n1. **Neurons and Layers:**\n   - **Input Layer:** Receives raw data.\n   - **Hidden Layers:** Perform computations and feature extraction.\n   - **Output Layer:** Produces the final prediction or classification.\n\n2. **Weights and Biases:**\n   - Parameters adjusted during training to minimize the difference between predicted and actual outputs.\n\n3. **Activation Functions:**\n   - Introduce non-linearity, allowing the network to model complex relationships. Common functions include ReLU, sigmoid, and tanh.\n\n4. **Forward and Backward Propagation:**\n   - **Forward Propagation:** Data passes through the network to generate predictions.\n   - **Backward Propagation:** The network adjusts weights and biases based on the error of predictions using gradient descent optimization.\n\n**Educational Resources on Deep Neural Networks:**\n\n1. **\"Neural Networks and Deep Learning\" by Coursera:**\n   - An online course that covers the fundamentals of neural networks, including forward and backward propagation, activation functions, and practical applications. ([coursera.org](https://www.coursera.org/learn/neural-networks-deep-learning/?utm_source=openai))\n\n2. **\"Artificial Neural Network and Deep Learning: Fundamentals and Theory\" by M. M. Hammad:**\n   - A comprehensive exploration of neural networks, discussing topics such as matrix calculus, gradient optimization, and challenges like vanishing gradients. ([arxiv.org](https://arxiv.org/abs/2408.16002?utm_source=openai))\n\n3. **\"The Principles of Deep Learning Theory\" by Daniel A. Roberts, Sho Yaida, and Boris Hanin:**\n   - This work delves into the theoretical underpinnings of deep learning, including layer-to-layer iteration equations and nonlinear learning dynamics. ([arxiv.org](https://arxiv.org/abs/2106.10165?utm_source=openai))\n\n4. **\"Deep Learning: An Introduction for Applied Mathematicians\" by Catherine F. Higham and Desmond J. Higham:**\n   - Provides a mathematical perspective on deep learning, covering topics like optimization and linear algebra in the context of neural networks. ([arxiv.org](https://arxiv.org/abs/1801.05894?utm_source=openai))\n\n5. **\"A Selective Overview of Deep Learning\" by Jianqing Fan, Cong Ma, and Yiqiao Zhong:**\n   - Offers insights into various neural network models and training techniques, highlighting the unique characteristics and theoretical foundations of deep learning. ([arxiv.org](https://arxiv.org/abs/1904.05526?utm_source=openai))\n\nThese resources provide a solid foundation for understanding the principles and applications of deep neural networks. "
+    },
+    {
+      "status": "done",
+      "id": "2f018340-0288-4876-a4b6-d969b0b13826",
+      "objective": "Collect authoritative sources for deep neural networks fundamentals",
+      "learning_goal": "deep neural networks fundamentals",
+      "completed_at": "2025-07-15T12:47:53.830513",
+      "research_method": "openai_deep_research",
+      "total_sources_found": 4,
+      "result": [
+        {
+          "title": "Introduction to Neural Networks",
+          "url": "https://www.schraudolph.org/teach/NNcourse/?utm_source=openai",
+          "snippet": "([schraudolph.org](https://www.schraudolph.org/teach/NNcourse/?utm_source=openai))",
+          "relevance_score": 0.9,
+          "source_type": "research",
+          "search_query": "deep neural networks fundamentals"
+        },
+        {
+          "title": "GitHub - ppotoc/Fundamentals-of-Neural-Networks: This teaching package contains modular contents for the introduction of the fundamentals of Neural Networks. The package consists of a series of MATLAB Live Scripts with complementary PowerPoint presentations.",
+          "url": "https://github.com/ppotoc/Fundamentals-of-Neural-Networks?utm_source=openai",
+          "snippet": "([github.com](https://github.com/ppotoc/Fundamentals-of-Neural-Networks?utm_source=openai))",
+          "relevance_score": 0.9,
+          "source_type": "research",
+          "search_query": "deep neural networks fundamentals"
+        },
+        {
+          "title": "The Principles of Deep Learning Theory",
+          "url": "https://arxiv.org/abs/2106.10165?utm_source=openai",
+          "snippet": "([arxiv.org](https://arxiv.org/abs/2106.10165?utm_source=openai))",
+          "relevance_score": 0.9,
+          "source_type": "research",
+          "search_query": "deep neural networks fundamentals"
+        },
+        {
+          "title": "MIT Deep Learning Basics: Introduction and Overview with TensorFlow — The TensorFlow Blog",
+          "url": "https://blog.tensorflow.org/2019/02/mit-deep-learning-basics-introduction-tensorflow.html?utm_source=openai",
+          "snippet": "([blog.tensorflow.org](https://blog.tensorflow.org/2019/02/mit-deep-learning-basics-introduction-tensorflow.html?utm_source=openai))",
+          "relevance_score": 0.9,
+          "source_type": "research",
+          "search_query": "deep neural networks fundamentals"
+        }
+      ],
+      "research_summary": "Deep neural networks (DNNs) are a subset of machine learning models inspired by the human brain's structure and function. They consist of multiple layers of interconnected artificial neurons that process data hierarchically, enabling the learning of complex patterns and representations.\n\n**Key Components of Deep Neural Networks:**\n\n1. **Neurons and Layers:**\n   - **Neurons:** Fundamental units that receive inputs, apply a function, and produce outputs.\n   - **Layers:** Organized into input, hidden, and output layers. The depth of a network refers to the number of hidden layers.\n\n2. **Activation Functions:**\n   - Introduce non-linearity, allowing the network to model complex relationships. Common functions include ReLU (Rectified Linear Unit), sigmoid, and tanh.\n\n3. **Weights and Biases:**\n   - Parameters adjusted during training to minimize the difference between predicted and actual outputs.\n\n4. **Forward and Backward Propagation:**\n   - **Forward Propagation:** Data passes through the network layers to generate an output.\n   - **Backward Propagation:** The network adjusts weights and biases based on the error of the output compared to the actual result, typically using gradient descent optimization.\n\n**Educational Resources on Deep Neural Networks:**\n\n1. **\"Introduction to Neural Networks\" by Nic Schraudolph and Fred Cummins:**\n   - This resource provides a comprehensive introduction to neural networks, covering topics such as artificial neuron models, linear regression, multi-layer networks, and the backpropagation algorithm. It also delves into advanced topics like recurrent neural networks and learning rate adaptation. ([schraudolph.org](https://www.schraudolph.org/teach/NNcourse/?utm_source=openai))\n\n2. **\"Fundamentals of Neural Networks\" Teaching Package:**\n   - A modular teaching package containing MATLAB Live Scripts and PowerPoint presentations. It covers principles and methods of neural networks, including feedforward networks, dynamic networks, radial basis function networks, and self-organizing maps. The package also emphasizes practical considerations for applying neural networks to real-world problems. ([github.com](https://github.com/ppotoc/Fundamentals-of-Neural-Networks?utm_source=openai))\n\n3. **\"The Principles of Deep Learning Theory\" by Daniel A. Roberts, Sho Yaida, and Boris Hanin:**\n   - This book develops an effective theory approach to understanding deep neural networks. It explains how to determine an accurate description of the output of trained networks by solving layer-to-layer iteration equations and nonlinear learning dynamics. The authors discuss the nearly-Gaussian distributions of network predictions and the role of the depth-to-width aspect ratio in controlling deviations from the infinite-width Gaussian description. ([arxiv.org](https://arxiv.org/abs/2106.10165?utm_source=openai))\n\n4. **\"MIT Deep Learning Basics: Introduction and Overview with TensorFlow\":**\n   - An introductory resource that provides an overview of deep learning concepts and their implementation using TensorFlow. It covers convolutional neural networks (CNNs) for image classification and recurrent neural networks (RNNs) for sequence modeling, offering practical examples and tutorials. ([blog.tensorflow.org](https://blog.tensorflow.org/2019/02/mit-deep-learning-basics-introduction-tensorflow.html?utm_source=openai))\n\nThese resources offer a solid foundation in deep neural networks, combining theoretical insights with practical applications to facilitate a comprehensive understanding of the subject. "
+    }
+  ],
+  "content_outputs": [
+    {
+      "status": "done",
+      "objective": "Draft slides",
+      "learning_goal": "the fundamentals of deep neural networks",
+      "completed_at": "2025-07-15T12:29:26.946855",
+      "curriculum_outline": {
+        "title": "Fundamentals of Deep Neural Networks",
+        "description": "This course provides an introduction to the fundamentals of deep neural networks, covering the basic concepts, architectures, and applications of deep learning.",
+        "learning_objectives": [
+          "Understand the basic concepts of neural networks",
+          "Learn about the different architectures of deep neural networks",
+          "Understand the principles of deep learning theory",
+          "Apply deep learning techniques to practical examples"
+        ],
+        "topics": [
+          {
+            "title": "Introduction to Neural Networks",
+            "description": "This topic covers the basic concepts of neural networks, including their structure and how they mimic the human brain.",
+            "slides_needed": 3,
+            "key_concepts": [
+              "Neuron",
+              "Activation Function",
+              "Weights and Biases"
+            ],
+            "difficulty_level": "beginner"
+          },
+          {
+            "title": "Deep Neural Networks",
+            "description": "This topic introduces the concept of deep neural networks, explaining their layered architecture and how they differ from simple neural networks.",
+            "slides_needed": 3,
+            "key_concepts": [
+              "Hidden Layers",
+              "Deep Learning",
+              "Backpropagation"
+            ],
+            "difficulty_level": "beginner"
+          },
+          {
+            "title": "Architectures of Deep Neural Networks",
+            "description": "This topic covers the different architectures of deep neural networks, such as Convolutional Neural Networks (CNNs) and Recurrent Neural Networks (RNNs).",
+            "slides_needed": 4,
+            "key_concepts": [
+              "CNN",
+              "RNN",
+              "Autoencoders"
+            ],
+            "difficulty_level": "intermediate"
+          },
+          {
+            "title": "Principles of Deep Learning Theory",
+            "description": "This topic delves into the principles of deep learning theory, explaining how deep learning models learn from data and make predictions.",
+            "slides_needed": 3,
+            "key_concepts": [
+              "Loss Function",
+              "Gradient Descent",
+              "Overfitting and Underfitting"
+            ],
+            "difficulty_level": "intermediate"
+          },
+          {
+            "title": "Applications of Deep Learning",
+            "description": "This topic explores practical applications of deep learning, with examples from fields like image recognition, natural language processing, and autonomous vehicles.",
+            "slides_needed": 4,
+            "key_concepts": [
+              "Image Recognition",
+              "Natural Language Processing",
+              "Autonomous Vehicles"
+            ],
+            "difficulty_level": "intermediate"
+          }
+        ],
+        "estimated_duration_minutes": 60
+      },
+      "total_slides_generated": 7,
+      "slides": [
+        {
+          "id": "a34c6d4d-50ac-4e91-9ded-6403f3cf1750",
+          "slide_number": 1,
+          "type": "title",
+          "layout": "full_text",
+          "title": "Fundamentals of Deep Neural Networks",
+          "contents": [
+            {
+              "type": "text",
+              "value": "This course provides an introduction to the fundamentals of deep neural networks, covering the basic concepts, architectures, and applications of deep learning.",
+              "position": {
+                "x": 50,
+                "y": 60
+              },
+              "style": {
+                "fontSize": 18,
+                "textAlign": "center"
+              }
+            }
+          ],
+          "speaker_notes": "Welcome to this presentation on Fundamentals of Deep Neural Networks. This course provides an introduction to the fundamentals of deep neural networks, covering the basic concepts, architectures, and applications of deep learning. We'll cover the essential concepts step by step.",
+          "duration_seconds": 20,
+          "sources": []
+        },
+        {
+          "id": "2bfe2eea-e7a6-4a8a-bdd4-482c8258e0aa",
+          "slide_number": 2,
+          "type": "content",
+          "layout": "bullet_points",
+          "title": "Introduction to Neural Networks",
+          "contents": [
+            {
+              "type": "bullet_list",
+              "value": [
+                "Neural networks are inspired by the human brain",
+                "They are composed of interconnected nodes called neurons",
+                "Each neuron receives inputs, performs a computation, and passes the result to other neurons",
+                "Neurons are organized into layers: input, hidden, and output layers",
+                "Connections between neurons have numeric weights that can be adjusted during training"
+              ],
+              "position": {
+                "x": 50,
+                "y": 30
+              }
+            }
+          ],
+          "speaker_notes": "Neural networks are a type of machine learning model inspired by the structure and function of the human brain. They are composed of interconnected nodes called neurons, which are organized into layers. Each neuron receives inputs, performs a computation using an activation function, and passes the result to other neurons. The connections between neurons have numeric weights that can be adjusted during the training process to optimize the network's performance on a specific task.",
+          "duration_seconds": 30,
+          "sources": [
+            {
+              "type": "web",
+              "title": "Neural Networks and Deep Learning | Coursera",
+              "id": "https://www.coursera.org/learn/neural-networks-deep-learning/?utm_source=openai",
+              "excerpt": "([coursera.org](https://www.coursera.org/learn/neural-networks-deep-learning/?utm_source=openai))",
+              "confidence": 0.9
+            },
+            {
+              "type": "web",
+              "title": "Artificial Neural Network and Deep Learning: Fundamentals and Theory",
+              "id": "https://arxiv.org/abs/2408.16002?utm_source=openai",
+              "excerpt": "([arxiv.org](https://arxiv.org/abs/2408.16002?utm_source=openai))",
+              "confidence": 0.9
+            },
+            {
+              "type": "web",
+              "title": "The Principles of Deep Learning Theory",
+              "id": "https://arxiv.org/abs/2106.10165?utm_source=openai",
+              "excerpt": "([arxiv.org](https://arxiv.org/abs/2106.10165?utm_source=openai))",
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "id": "1a023948-acf2-4784-a194-fd206a7c0440",
+          "slide_number": 3,
+          "type": "content",
+          "layout": "bullet_points",
+          "title": "Deep Neural Networks",
+          "contents": [
+            {
+              "type": "bullet_list",
+              "value": [
+                "Simple neural networks have one input layer and one output layer",
+                "Deep neural networks have multiple hidden layers between input and output",
+                "Hidden layers allow for more complex representations and feature learning",
+                "Deep learning algorithms like backpropagation train these deep architectures"
+              ],
+              "position": {
+                "x": 50,
+                "y": 30
+              }
+            }
+          ],
+          "speaker_notes": "Deep neural networks are a type of artificial neural network with multiple hidden layers between the input and output layers. These hidden layers allow the network to learn increasingly complex representations of the input data, enabling it to model and solve more intricate problems compared to shallow networks. Training deep networks is made possible by algorithms like backpropagation that can efficiently adjust the weights across all layers.",
+          "duration_seconds": 30,
+          "sources": [
+            {
+              "type": "web",
+              "title": "Neural Networks and Deep Learning | Coursera",
+              "id": "https://www.coursera.org/learn/neural-networks-deep-learning/?utm_source=openai",
+              "excerpt": "([coursera.org](https://www.coursera.org/learn/neural-networks-deep-learning/?utm_source=openai))",
+              "confidence": 0.9
+            },
+            {
+              "type": "web",
+              "title": "Artificial Neural Network and Deep Learning: Fundamentals and Theory",
+              "id": "https://arxiv.org/abs/2408.16002?utm_source=openai",
+              "excerpt": "([arxiv.org](https://arxiv.org/abs/2408.16002?utm_source=openai))",
+              "confidence": 0.9
+            },
+            {
+              "type": "web",
+              "title": "The Principles of Deep Learning Theory",
+              "id": "https://arxiv.org/abs/2106.10165?utm_source=openai",
+              "excerpt": "([arxiv.org](https://arxiv.org/abs/2106.10165?utm_source=openai))",
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "id": "a5f4358c-b076-4f6e-9026-dc2cdffbe0a6",
+          "slide_number": 4,
+          "type": "content",
+          "layout": "bullet_points",
+          "title": "Architectures of Deep Neural Networks",
+          "contents": [
+            {
+              "type": "bullet_list",
+              "value": [
+                "Convolutional Neural Networks (CNNs)",
+                "Recurrent Neural Networks (RNNs)",
+                "Autoencoders"
+              ],
+              "position": {
+                "x": 50,
+                "y": 30
+              }
+            },
+            {
+              "type": "text",
+              "value": "CNNs are designed for processing data with a grid-like topology, such as images.",
+              "position": {
+                "x": 50,
+                "y": 150
+              }
+            },
+            {
+              "type": "text",
+              "value": "RNNs are designed for processing sequential data, such as text or time series data.",
+              "position": {
+                "x": 50,
+                "y": 200
+              }
+            },
+            {
+              "type": "text",
+              "value": "Autoencoders are unsupervised neural networks that learn efficient data encodings.",
+              "position": {
+                "x": 50,
+                "y": 250
+              }
+            }
+          ],
+          "speaker_notes": "This slide introduces the three main architectures of deep neural networks: CNNs, RNNs, and Autoencoders. CNNs are designed for processing grid-like data, such as images, by using convolutional and pooling layers. RNNs are designed for processing sequential data, such as text or time series data, by using recurrent connections. Autoencoders are unsupervised neural networks that learn efficient data encodings, which can be used for dimensionality reduction or feature learning.",
+          "duration_seconds": 30,
+          "sources": [
+            {
+              "type": "web",
+              "title": "Neural Networks and Deep Learning | Coursera",
+              "id": "https://www.coursera.org/learn/neural-networks-deep-learning/?utm_source=openai",
+              "excerpt": "([coursera.org](https://www.coursera.org/learn/neural-networks-deep-learning/?utm_source=openai))",
+              "confidence": 0.9
+            },
+            {
+              "type": "web",
+              "title": "Artificial Neural Network and Deep Learning: Fundamentals and Theory",
+              "id": "https://arxiv.org/abs/2408.16002?utm_source=openai",
+              "excerpt": "([arxiv.org](https://arxiv.org/abs/2408.16002?utm_source=openai))",
+              "confidence": 0.9
+            },
+            {
+              "type": "web",
+              "title": "The Principles of Deep Learning Theory",
+              "id": "https://arxiv.org/abs/2106.10165?utm_source=openai",
+              "excerpt": "([arxiv.org](https://arxiv.org/abs/2106.10165?utm_source=openai))",
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "id": "6dd6be43-f76c-4c6a-99c2-5c47c1ea0e05",
+          "slide_number": 5,
+          "type": "content",
+          "layout": "bullet_points",
+          "title": "Principles of Deep Learning Theory",
+          "contents": [
+            {
+              "type": "bullet_list",
+              "value": [
+                "Loss Function: Measures the difference between predicted and actual outputs",
+                "Gradient Descent: Optimizes model parameters to minimize the loss function",
+                "Overfitting: When a model learns the training data too well, failing to generalize",
+                "Underfitting: When a model is too simple to capture the underlying patterns"
+              ],
+              "position": {
+                "x": 50,
+                "y": 30
+              }
+            }
+          ],
+          "speaker_notes": "This slide introduces the key principles of deep learning theory. The loss function quantifies the model's performance, and gradient descent is used to optimize the model parameters. Overfitting and underfitting are common issues that must be addressed for effective learning.",
+          "duration_seconds": 30,
+          "sources": [
+            {
+              "type": "web",
+              "title": "Neural Networks and Deep Learning | Coursera",
+              "id": "https://www.coursera.org/learn/neural-networks-deep-learning/?utm_source=openai",
+              "excerpt": "([coursera.org](https://www.coursera.org/learn/neural-networks-deep-learning/?utm_source=openai))",
+              "confidence": 0.9
+            },
+            {
+              "type": "web",
+              "title": "Artificial Neural Network and Deep Learning: Fundamentals and Theory",
+              "id": "https://arxiv.org/abs/2408.16002?utm_source=openai",
+              "excerpt": "([arxiv.org](https://arxiv.org/abs/2408.16002?utm_source=openai))",
+              "confidence": 0.9
+            },
+            {
+              "type": "web",
+              "title": "The Principles of Deep Learning Theory",
+              "id": "https://arxiv.org/abs/2106.10165?utm_source=openai",
+              "excerpt": "([arxiv.org](https://arxiv.org/abs/2106.10165?utm_source=openai))",
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "id": "df6f2562-b8f7-4385-b201-c2f7a81c2838",
+          "slide_number": 6,
+          "type": "content",
+          "layout": "bullet_points",
+          "title": "Applications of Deep Learning",
+          "contents": [
+            {
+              "type": "bullet_list",
+              "value": [
+                "Image Recognition",
+                "Natural Language Processing",
+                "Autonomous Vehicles"
+              ],
+              "position": {
+                "x": 50,
+                "y": 30
+              }
+            }
+          ],
+          "speaker_notes": "Deep learning has enabled breakthroughs in various fields. Image recognition powers applications like facial recognition and medical imaging analysis. Natural language processing drives virtual assistants and language translation tools. Autonomous vehicles rely on deep learning for object detection and navigation.",
+          "duration_seconds": 30,
+          "sources": [
+            {
+              "type": "web",
+              "title": "Neural Networks and Deep Learning | Coursera",
+              "id": "https://www.coursera.org/learn/neural-networks-deep-learning/?utm_source=openai",
+              "excerpt": "([coursera.org](https://www.coursera.org/learn/neural-networks-deep-learning/?utm_source=openai))",
+              "confidence": 0.9
+            },
+            {
+              "type": "web",
+              "title": "Artificial Neural Network and Deep Learning: Fundamentals and Theory",
+              "id": "https://arxiv.org/abs/2408.16002?utm_source=openai",
+              "excerpt": "([arxiv.org](https://arxiv.org/abs/2408.16002?utm_source=openai))",
+              "confidence": 0.9
+            },
+            {
+              "type": "web",
+              "title": "The Principles of Deep Learning Theory",
+              "id": "https://arxiv.org/abs/2106.10165?utm_source=openai",
+              "excerpt": "([arxiv.org](https://arxiv.org/abs/2106.10165?utm_source=openai))",
+              "confidence": 0.9
+            }
+          ]
+        },
+        {
+          "id": "9858ee06-9d78-492b-9c2b-b8cf0db18a12",
+          "slide_number": 7,
+          "type": "summary",
+          "layout": "bullet_points",
+          "title": "Summary",
+          "contents": [
+            {
+              "type": "bullet_list",
+              "value": [
+                "Neuron",
+                "Activation Function",
+                "Hidden Layers",
+                "Deep Learning",
+                "CNN",
+                "RNN"
+              ],
+              "position": {
+                "x": 50,
+                "y": 40
+              }
+            }
+          ],
+          "speaker_notes": "Let's summarize what we've learned about Fundamentals of Deep Neural Networks. These key concepts form the foundation of understanding.",
+          "duration_seconds": 25,
+          "sources": []
+        }
+      ]
+    }
+  ],
+  "sources": [],
+  "curriculum_outline": {},
+  "slide_contents": [],
+  "visual_assets": {},
+  "deck_json": {},
+  "speaker_notes": [],
+  "audio_tasks": [],
+  "audio_urls": {},
+  "current_phase": "content",
+  "iteration_count": 0,
+  "error_log": []
+}

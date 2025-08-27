@@ -1,98 +1,220 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Lucid Learn AI - Backend API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## Overview
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+This is the NestJS backend API for the Lucid Learn AI platform. It provides RESTful endpoints for interacting with AI educational agents and managing the learning experience.
 
-## Description
+## Features
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- **AI Agent Integration**: Direct communication with Python-based AI services
+- **Q&A Agent**: Educational question-answering capabilities
+- **Health Monitoring**: Real-time service health checks
+- **Swagger Documentation**: Interactive API documentation
+- **Type-Safe Configuration**: Environment-based configuration management
+- **Comprehensive Testing**: Unit and integration tests
 
-## Project setup
+## Quick Start
+
+### Prerequisites
+
+- Node.js 18+
+- npm or yarn
+- Python services running (see `../python_services/`)
+
+### Installation
 
 ```bash
-$ npm install
+npm install
 ```
 
-## Compile and run the project
+### Configuration
+
+Create a `.env` file based on `env.example`:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+cp env.example .env
 ```
 
-## Run tests
+Edit the `.env` file with your configuration:
+
+```env
+# Server Configuration
+NODE_ENV=development
+PORT=3000
+
+# CORS Configuration
+CORS_ORIGINS=http://localhost:3000,http://localhost:8081,http://localhost:19006
+
+# Python AI Services Configuration
+QNA_AGENT_URL=http://localhost:8001
+QNA_AGENT_TIMEOUT=30000
+
+# Logging
+LOG_LEVEL=debug
+```
+
+### Running the Application
 
 ```bash
-# unit tests
-$ npm run test
+# Development mode
+npm run start:dev
 
-# e2e tests
-$ npm run test:e2e
+# Production mode
+npm run start:prod
 
-# test coverage
-$ npm run test:cov
+# Debug mode
+npm run start:debug
 ```
+
+The API will be available at:
+- **API**: http://localhost:3000
+- **Documentation**: http://localhost:3000/api/docs
+
+## API Endpoints
+
+### AI Agents
+
+#### Ask Q&A Agent
+```http
+POST /api/agents/qna/ask
+Content-Type: application/json
+
+{
+  "sessionId": "session_123",
+  "userId": "user_456",
+  "message": "What is the capital of France?",
+  "conversationHistory": [],
+  "preferredProvider": "openai",
+  "context": {
+    "subject": "geography"
+  }
+}
+```
+
+#### Health Checks
+```http
+GET /api/agents/health
+GET /api/agents/qna/health
+```
+
+## Architecture
+
+### Service Communication
+
+```
+Frontend (React Native/Expo)
+         ↓
+NestJS Backend API
+         ↓
+Python AI Services
+```
+
+### Key Components
+
+- **Controllers**: Handle HTTP requests and responses
+- **Services**: Business logic and external service communication
+- **DTOs**: Data validation and transformation
+- **Configuration**: Environment-based settings
+- **Interceptors**: Request/response logging and error handling
+
+### Error Handling
+
+The API provides comprehensive error handling with appropriate HTTP status codes:
+
+- `400`: Bad Request - Invalid input data
+- `503`: Service Unavailable - AI services are down
+- `500`: Internal Server Error - Unexpected errors
+
+## Testing
+
+```bash
+# Unit tests
+npm run test
+
+# End-to-end tests
+npm run test:e2e
+
+# Test coverage
+npm run test:cov
+```
+
+## Development
+
+### Code Style
+
+```bash
+# Format code
+npm run format
+
+# Lint code
+npm run lint
+```
+
+### Building
+
+```bash
+npm run build
+```
+
+## Integration with Python Services
+
+This backend communicates with Python-based AI services. Ensure the following services are running:
+
+1. **Q&A Agent Service** - Port 8000
+   - Handles educational questions
+   - Supports multiple LLM providers
+   - Maintains conversation context
+
+### Service Discovery
+
+The backend automatically discovers and monitors Python services. Health checks ensure reliability and provide fallback mechanisms.
 
 ## Deployment
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### Environment Variables
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Required environment variables for production:
+
+- `NODE_ENV=production`
+- `PORT=3000`
+- `QNA_AGENT_URL=https://your-qna-service.com`
+- `CORS_ORIGINS=https://your-frontend.com`
+
+### Docker
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Build image
+docker build -t lucid-learn-api .
+
+# Run container
+docker run -p 3000:3000 --env-file .env lucid-learn-api
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Monitoring
 
-## Resources
+### Health Checks
 
-Check out a few resources that may come in handy when working with NestJS:
+- `/api/agents/health` - Overall AI services health
+- `/api/agents/qna/health` - Q&A agent specific health
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### Logging
 
-## Support
+Structured logging with different levels:
+- Development: `debug` level
+- Production: `info` level
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Contributing
 
-## Stay in touch
+1. Follow TypeScript best practices
+2. Write comprehensive tests
+3. Update documentation
+4. Use conventional commit messages
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## API Documentation
 
-## License
+Interactive API documentation is available at `/api/docs` when the server is running. This includes:
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+- Request/response schemas
+- Example requests
+- Authentication requirements
+- Error response formats

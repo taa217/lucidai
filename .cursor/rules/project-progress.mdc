@@ -1,0 +1,7 @@
+---
+description: ALWAYS UPDATE @TEACHING_SLIDES_README.md
+globs: 
+alwaysApply: true
+---
+always update the [TEACHING_SLIDES_README.md](mdc:TEACHING_SLIDES_README.md) based on how the project is at and how its working and check things that are done and that are yet to be done. it should always be recent. any changes to the project paln and structure sould be reflected. when running the python stff please make sure your are in the virtual environment
+fee free to install other tools that could make our projects better and everything. suggestions to built SOTA systems
