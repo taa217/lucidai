@@ -40,7 +40,7 @@ export class WorkOSAuthController {
     try {
       // Use default values if not provided
       const finalClientId = clientId || this.workosAuthService.getClientId();
-      const finalRedirectUri = redirectUri || 'http://localhost:8081/auth/callback';
+      const finalRedirectUri = redirectUri || 'http://localhost:3000/auth/callback';
       
       console.log('🔍 WorkOS - GET /authorize called with:', { finalClientId, finalRedirectUri });
       
@@ -232,7 +232,7 @@ export class WorkOSAuthController {
       const clientId = this.workosAuthService.getClientId();
       
       // Test generating an authorization URL
-      const testRedirectUri = 'http://localhost:8081/auth/callback';
+      const testRedirectUri = 'http://localhost:3000/auth/callback';
       const authorizationUrl = await this.workosAuthService.getAuthorizationUrl({
         clientId,
         redirectUri: testRedirectUri,

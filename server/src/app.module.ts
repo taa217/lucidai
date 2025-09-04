@@ -21,6 +21,7 @@ import { ResearchSession } from './entities/research-session.entity';
 import { ResearchMessage } from './entities/research-message.entity';
 import { ResearchSource } from './entities/research-source.entity';
 import { DocumentController } from './controllers/document.controller';
+import { UserController } from './controllers/user.controller';
 import { DocumentService } from './services/document.service';
 import { ChatController } from './controllers/chat.controller';
 import { StorageService } from './services/storage.service';
@@ -47,7 +48,7 @@ import { ResearchController } from './controllers/research.controller';
     SlidesModule,
     SlidesPipelineModule,
   ],
-  controllers: [AppController, DocumentController, ChatController, ResearchController],
+  controllers: [AppController, DocumentController, ChatController, ResearchController, UserController],
   providers: [AppService, DocumentService, StorageService],
 })
 export class AppModule {}

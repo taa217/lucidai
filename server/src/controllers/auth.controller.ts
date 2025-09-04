@@ -203,36 +203,6 @@ export class AuthController {
     };
   }
 
-  @Get('customize')
-  @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Get Customize Lucid preferences for current user' })
-  @ApiBearerAuth()
-  @ApiResponse({ status: 200, description: 'Preferences retrieved' })
-  async getCustomize(@CurrentUser() user: any) {
-    return this.userService.getCustomizePreferences(user.id);
-  }
-
-  @Put('customize')
-  @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Update Customize Lucid preferences for current user' })
-  @ApiBearerAuth()
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        displayName: { type: 'string', nullable: true },
-        occupation: { type: 'string', nullable: true },
-        traits: { type: 'string', nullable: true },
-        extraNotes: { type: 'string', nullable: true },
-        preferredLanguage: { type: 'string', nullable: true },
-      },
-    },
-  })
-  @ApiResponse({ status: 200, description: 'Preferences updated' })
-  async putCustomize(@CurrentUser() user: any, @Body() body: any) {
-    return this.userService.updateCustomizePreferences(user.id, body || {});
-  }
-
   @Get('demo-credentials')
   @ApiOperation({ summary: 'Get demo credentials for testing' })
   @ApiResponse({ status: 200, description: 'Demo credentials' })

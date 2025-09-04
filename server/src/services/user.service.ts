@@ -320,6 +320,14 @@ export class UserService {
     extraNotes?: string;
     preferredLanguage?: string;
   }> {
+    const normalizeLanguage = (value?: string | null): string | undefined => {
+      if (!value) return undefined;
+      const v = (value || '').trim();
+      // Map common codes to human-readable names
+      const lower = v.toLowerCase();
+      if (lower === 'en' || lower === 'en-us' || lower === 'en_usa' || lower === 'english') return 'English';
+      return v;
+    };
     // Prefer normalized table if present
     let row = await this.userCustomizationRepository.findOne({ where: { userId } });
     if (!row) {
@@ -331,7 +339,7 @@ export class UserService {
         occupation: custom.occupation,
         traits: custom.traits,
         extraNotes: custom.extraNotes,
-        preferredLanguage: custom.preferredLanguage ?? (prefs.language || 'English'),
+        preferredLanguage: normalizeLanguage(custom.preferredLanguage ?? prefs.language ?? 'English'),
       };
     }
     return {
@@ -339,7 +347,7 @@ export class UserService {
       occupation: row.occupation ?? undefined,
       traits: row.traits ?? undefined,
       extraNotes: row.extraNotes ?? undefined,
-      preferredLanguage: row.preferredLanguage ?? undefined,
+      preferredLanguage: normalizeLanguage(row.preferredLanguage ?? undefined),
     };
   }
 

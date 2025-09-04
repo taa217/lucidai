@@ -64,6 +64,78 @@ cd app && npm i @babel/standalone --save
 ```
 
 ## Recent Updates (Latest)
+
+### 🔧 API base URL normalization — FIXED
+- Ensured the web app always calls server routes with the `/api` prefix.
+- Change: normalized `app/src/services/api.ts` baseURL to append `/api` if missing.
+- Impact: fixes 404s like `Cannot GET /documents/user/<id>` and `/research/sessions` when `REACT_APP_API_URL` omitted `/api`.
+
+### 🎨 ChatGPT-like Learning Interface — COMPLETED
+- **What**: Completely redesigned the main interface to match ChatGPT's clean, minimalist design
+- **Changes Made**:
+  - Replaced complex Dashboard with clean LearningInterface component
+  - Created new LearningSidebar with learning-focused navigation (Learn, Documents, Chat History, Favorites, Settings)
+  - Built new LearningLayout that integrates sidebar and main content area
+  - Added centered input field with "What do you want to learn?" prompt
+  - Included microphone and audio input buttons for voice interaction
+  - Created placeholder pages for all navigation routes
+- **Components Created**:
+  - `LearningInterface.tsx` - Main learning input page
+  - `LearningSidebar.tsx` - Clean sidebar navigation
+  - `LearningLayout.tsx` - Main layout wrapper
+  - `PlaceholderPage.tsx` - Placeholder for future features
+- **Status**: ✅ New interface is ready and follows ChatGPT design principles
+
+### 🏗️ Modular Sidebar Architecture — COMPLETED & ENHANCED
+- **What**: Refactored sidebar into modular, reusable components following best practices with new Lucid-focused structure
+- **Changes Made**:
+  - Created `Sidebar` - Generic, configurable sidebar component
+  - Created `SidebarHeader` - Reusable header with company logo and branding
+  - Created `SidebarNavigation` - Navigation items list component with support for buttons and sections
+  - Created `SidebarFooter` - Footer with user profile display and logout functionality
+  - Created `SidebarItem` - Individual navigation item component
+  - Created `SidebarSection` - Collapsible section component with arrow indicators
+  - Created `navigation.ts` - Centralized navigation configuration with new structure
+  - Refactored `LearningSidebar` to use new modular components
+- **New Sidebar Structure**:
+  - **Header**: Company name "Lucid" with brain logo
+  - **New Session Button**: Prominent button to start new learning sessions
+  - **Library Section**: Collapsible section with Documents, Favorites, Settings (with arrow indicator)
+  - **Recents Section**: Shows recent learning sessions
+  - **Footer**: User profile with name, email, and logout option
+- **Benefits**:
+  - **Reusability**: Components can be used in different contexts
+  - **Maintainability**: Each component has single responsibility
+  - **Flexibility**: Easy to customize for different use cases
+  - **Type Safety**: Full TypeScript support with proper interfaces
+  - **Consistency**: Unified styling and behavior across the app
+  - **User Experience**: Clean, organized navigation matching modern app patterns
+- **Status**: ✅ Enhanced modular architecture with Lucid branding and improved UX implemented
+
+## Next Steps to Implement
+
+### 🚀 Learning Interface Features
+- **AI Learning Engine**: ✅ COMPLETED - Integrated with AI teacher system for interactive mode
+- **Chat Interface**: Build a conversation view similar to ChatGPT for ongoing learning sessions
+- **Voice Input**: Implement actual microphone functionality for voice-to-text learning requests
+- **Learning History**: Create a proper chat history view with conversation threads
+- **Document Management**: Build the documents page for uploading and managing study materials
+
+### 🔧 Technical Improvements
+- **State Management**: Implement proper state management for learning sessions
+- **Real-time Updates**: Add WebSocket support for live learning interactions
+- **Responsive Design**: Ensure the interface works perfectly on all device sizes
+- **Accessibility**: Add proper ARIA labels and keyboard navigation support
+- **Component Architecture**: ✅ Modular sidebar components implemented for reusability
+
+### 🔧 TypeScript Compilation Fixes — FIXED
+- **Issue**: Server was failing to start due to missing type definitions for `SlideGenerationResponse` and `Deck`
+- **Solution**: 
+  - Created comprehensive slide types in `app/src/types/slides.ts` with proper interfaces for `Slide`, `Deck`, `SlideGenerationResponse`, and related types
+  - Updated server's `types/slides.ts` to correctly export from `../../app/src/types/slides`
+  - Added slides types export to main `app/src/types/index.ts`
+- **Status**: ✅ Server can now compile and start without TypeScript errors
+
 ### ⏱️ Voice-synced dynamic lessons (Teacher Agent) — UPDATED
 - TSX renderers now receive `timeSeconds` (current audio playback time) and `timeline` (array of `{ at: number, event: string }`).
 - The AI Teacher emits an initial render immediately, then after TTS it emits a refined `timeline` aligned to narration beats, plus a `speak` event with optional `segments` (each has `text`, `start_at`, `duration_seconds`). If Cartesia TTS is enabled, the `speak` event also includes `word_timestamps`—fine-grained word-level timing.
@@ -72,6 +144,33 @@ cd app && npm i @babel/standalone --save
 ### 🖊️ Code-drawn diagrams (SVG) — NEW
 - The runtime exposes lightweight SVG primitives so the AI can draw diagrams directly in TSX without Mermaid.
 - Prefer SVG for reliability and fine control; keep shapes simple and readable. Mermaid remains supported as a convenience.
+
+### 🧑‍🏫 AI Teacher Frontend Integration - ✅ COMPLETED & FIXED
+- **What**: Complete frontend integration for the AI Teacher module with interactive learning sessions
+- **Components Created**:
+  - `AITeacherSession.tsx` - Main session component that handles streaming and audio playback
+  - `CodeSlideRuntime.tsx` - TSX code renderer with Babel compilation and error handling
+  - `ai-teacher.ts` - TypeScript types for all AI Teacher events and data structures
+- **Features Implemented**:
+  - **Streaming Integration**: Real-time NDJSON streaming from AI Teacher backend
+  - **TSX Rendering**: Dynamic compilation and rendering of AI-generated TSX code
+  - **Audio Playback**: Synchronized audio narration with visual content
+  - **Audio URL Resolution (Fix)**: Frontend now resolves relative `audio_url` values to the Slide Orchestrator origin on port `8003` (e.g., `http://<host>:8003/storage/generated_audio/*.wav|*.mp3`). This prevents "no supported source was found" errors caused by trying to play a relative path against the web app origin.
+  - **Web Playback Attributes (Fix)**: Audio element is initialized with `playsInline`, `preload='auto'`, and `autoplay=true` for reliable playback on web.
+  - **Error Handling**: Auto-fix feedback loop for render errors with deduplication
+  - **Interactive Controls**: Play/pause, replay, and session management
+- **Recent Fix**: Updated API service to call Python teacher service directly on port 8003 instead of through NestJS server
+  - **Progressive Reveals**: Timeline-based content reveals synchronized with audio
+- **API Integration**:
+  - `startTeacherSession()` - Initialize new teaching sessions
+  - `streamTeacherLesson()` - Stream lesson events with real-time updates
+  - `reportTeacherRenderError()` - Report errors for automatic fixes
+- **User Experience**:
+  - Seamless transition from learning input to immersive teaching session
+  - Visual feedback during compilation and error repair
+  - Clean session management with replay functionality
+  - Responsive design that works on all screen sizes
+- **Status**: ✅ Complete frontend implementation ready for interactive learning
 
 ### 🧑‍🏫 New AI Teacher Module (agentic runtime-first) - ADDED
 - What: A new backend module `python_services/ai_teacher` that streams a live teaching session as typed events the frontend can render like a YouTube-style lesson.
@@ -189,31 +288,56 @@ cd app && npm i @babel/standalone --save
     - Bash: `cd server && npm install --silent && npm run migration:run`
 
 ### 🌐 Customize Lucid: Preferred Language & Prompt Personalization - ✅ UPDATED
-- **Change**: Replaced the "Enable for new chats" switch with a **Preferred language** field in `app/components/navigation/Sidebar.tsx` → Customize Lucid dialog.
+- **Change**: Replaced the "Enable for new chats" switch with a **Preferred language** field in Customize Lucid dialog.
 - **New Behavior**: Users can set their preferred language (default **English**). Value is persisted to NeonDB via `/auth/customize` and also cached in `AsyncStorage` under `lucid_customize_prefs.preferredLanguage` for offline. During chats, the backend now injects user customization into the Q&A context so the AI adopts the user's preferences.
 - **Dev Note**: The previous `enableForNew` preference is removed from the saved payload. If any feature depended on it, update to use `preferredLanguage` or remove the dependency.
 
 ### 👤 Customize Lucid: Persist user details to NeonDB + Q&A Prompt Injection - ✅ ADDED
 - **Backend**:
-  - New endpoints in `server/src/controllers/auth.controller.ts`:
-    - `GET /auth/customize` returns `{ displayName?, occupation?, traits?, extraNotes?, preferredLanguage? }`.
-    - `PUT /auth/customize` updates any subset of those fields; blanks allowed.
+  - New endpoints in `server/src/controllers/user.controller.ts`:
+    - `GET /users/customize` returns `{ displayName?, occupation?, traits?, extraNotes?, preferredLanguage? }`.
+    - `PUT /users/customize` updates any subset of those fields; blanks allowed.
   - Normalized storage: New table `user_customizations` with columns: `userId (unique)`, `displayName`, `occupation`, `traits`, `extraNotes`, `preferredLanguage`, timestamps.
   - Migration `1755000000000-CreateUserCustomization.ts` creates the table and backfills from existing `user_preferences.customPreferences` and `language`.
   - Service: `server/src/services/user.service.ts` now reads/writes `user_customizations` and mirrors `preferredLanguage` to `user_preferences.language` for global language.
   - Q&A Controller Enrichment: `server/src/controllers/ai-agent.controller.ts` now fetches the user's customization via `UserService.getCustomizePreferences(userId)` and merges it into the Q&A `context` as `userPreferences` for both `/api/agents/qna/ask` and `/api/agents/qna/ask/stream`.
   - Python Agent Prompting: `python_services/qna_agent_service/agent.py` appends a "User customization preferences" section to the system prompt (name, occupation, traits, notes, preferred language).
 - **Frontend**:
-  - `LucidApiService.getCustomizePreferences()` and `.updateCustomizePreferences(...)` added in `app/services/api.ts`.
-  - `CustomizeDialog` now loads from backend first, falls back to local cache, and saves to both.
+  - `apiService.getUserCustomization()` and `apiService.updateUserCustomization(...)` added in `app/src/services/api.ts`.
+  - `CustomizeLucidModal` added under `app/src/components/CustomizeLucidModal.tsx`; opens from `SidebarFooter` and centers on screen.
   - `ChatInterface` already forwards `context`; backend enriches it, so no UI change needed.
  - **Ops**:
    - Run migrations on the backend: `npm run typeorm:migration:run` (or your project’s migration command) before deploying.
 
-### 📚 Sidebar Library Empty/Error States - ✅ UPDATED
-- **Change**: Removed fallback to mock library items in `app/components/navigation/Sidebar.tsx`.
-- **New Behavior**: Shows "Loading…", then either **"No documents"** when none are found or **"Failed to load documents"** on fetch errors.
-- **User Impact**: Prevents confusing placeholder items like "Deep Learning" from appearing when data isn't available.
+### 📚 Library Page Implementation - ✅ COMPLETED
+- **What**: Created a comprehensive Library page that displays user documents with search functionality
+- **Features Implemented**:
+  - **Search Bar**: Real-time search with debouncing (300ms delay) across document names and tags
+  - **Document Grid/List View**: Toggle between grid and list layouts for different viewing preferences
+  - **Sorting Options**: Sort by date (newest first), name (alphabetical), or file size
+  - **Document Cards**: Rich document display with file icons, metadata, and action buttons
+  - **Loading States**: Skeleton loading and proper error handling with retry options
+  - **Empty States**: User-friendly messages when no documents exist or search returns no results
+- **Components Created**:
+  - `Library.tsx` - Main library page with search, sorting, and document management
+  - `DocumentCard.tsx` - Reusable document card component for both grid and list views
+  - `documentService.ts` - Frontend service for all document-related API calls
+  - `document.ts` - TypeScript types for documents and collections
+- **Navigation Integration**:
+  - Updated sidebar navigation to link "Library" to `/library` route
+  - Added `/library` route to App.tsx routing configuration
+  - Library section now properly navigates to the new library page
+- **Backend Integration**:
+  - Connects to existing document endpoints (`/api/documents/user/:userId`)
+  - Supports search functionality via `/api/documents/search`
+  - Handles document actions (view, download, delete) through existing API
+- **User Experience**:
+  - Clean, modern interface matching the app's design system
+  - Responsive design that works on all screen sizes
+  - File type indicators with appropriate icons and colors
+  - Tag display with overflow handling for documents with many tags
+  - Results summary showing filtered vs total document counts
+- **Status**: ✅ Complete library implementation with full search and document management functionality
 
 ### 📖 Library Screen Mock Removal & Error State - ✅ UPDATED
 - **Change**: Removed mock `spaces`, `recents`, and `library` data from `app/components/library/LibraryView.tsx`.
@@ -247,8 +371,43 @@ cd app && npm i @babel/standalone --save
   - ✅ **Library Access**: Users can now access their documents after WorkOS login
   - ✅ **Session Management**: Proper session token handling for API calls
   - ✅ **JWT For APIs**: On callback, backend now issues our API JWT (accessToken) used by guarded endpoints like `/api/documents/*`
-- **Current Status**: Complete WorkOS integration with database storage; web now auto-redirects to custom WorkOS login when visiting `/auth` (no button click required); proper logout implemented (redirects to WorkOS logout and returns to `/auth`)
-- **Next Steps**: Test the full user flow from login to library access
+  - ✅ **API Token Integration**: Fixed API service to use WorkOS access tokens instead of legacy authToken
+  - ✅ **Library Authentication**: Library component now properly uses AuthContext instead of localStorage
+  - ✅ **Document Upload**: Added upload button to Library page with drag-and-drop modal for document uploads
+- **Current Status**: Complete WorkOS integration with database storage; React frontend now has full authentication flow with protected routes, login/logout functionality, user profile display, and document upload functionality
+- **Frontend Implementation**: 
+  - ✅ **React App**: New React frontend with WorkOS authentication
+  - ✅ **Protected Routes**: Automatic authentication checks and redirects
+  - ✅ **Login Page**: Beautiful login interface with WorkOS integration
+  - ✅ **Auth Callback**: Handles OAuth redirect and token storage
+  - ✅ **User Dashboard**: Shows user information and logout functionality
+  - ✅ **Session Management**: Tokens stored in localStorage with validation
+  - ✅ **Library Navigation**: Fixed authentication issue preventing library access
+- **Next Steps**: Test the complete user flow from login to dashboard access
+
+### 📖 Document Reader with Chat Interface (Latest) - ✅ IMPLEMENTED
+- **What**: Complete document reading experience with integrated AI chat functionality
+- **Features Implemented**:
+  - **Document Viewer**: Full PDF/document viewing with iframe integration
+  - **Chat Interface**: Side-by-side chat panel for document Q&A
+  - **Chat History**: Automatic loading and display of previous chat sessions
+  - **Recent Sessions**: Clicking recent chat sessions opens document with chat history
+  - **Document Actions**: Download, share, and toggle chat panel functionality
+  - **Error Handling**: Comprehensive error states and loading indicators
+- **Components Created**:
+  - `ChatInterface.tsx` - Reusable chat component with message history and AI integration
+  - Enhanced `DocumentReader.tsx` - Complete document viewer with chat sidebar
+  - Updated `api.ts` - Added Q&A endpoint integration
+- **Backend Integration**:
+  - Uses existing `/api/documents/:documentId` and `/api/documents/:documentId/url` endpoints
+  - Integrates with `/api/agents/qna/ask` for AI responses
+  - Connects to `/api/chat/sessions/:sessionId/messages` for chat history
+- **User Experience**:
+  - Clean, modern interface with collapsible chat panel
+  - Real-time message display with proper formatting
+  - Document metadata display (type, size, upload date)
+  - Responsive design that works on all screen sizes
+- **Status**: ✅ Complete document reading and chat functionality implemented
 
 ### 📖 Read Mode Upload Flow (Latest) - ✅ WORKING
 - **Problem**: In `InitialPrompt` read mode, opening a locally-picked PDF passed a random `docId` to the reader, causing backend errors like `invalid input syntax for type uuid`.
