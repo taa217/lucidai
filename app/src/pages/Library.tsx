@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Search, FileText, Download, Eye, Calendar, Tag, Grid, List, Upload } from 'lucide-react'
 import { documentService } from '../services/documentService'
 import { DocumentCard } from '../components/DocumentCard'
@@ -8,6 +9,7 @@ import type { Document } from '../types'
 
 export const Library: React.FC = () => {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth()
+  const navigate = useNavigate()
   const [documents, setDocuments] = useState<Document[]>([])
   const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([])
   const [searchQuery, setSearchQuery] = useState('')
@@ -148,7 +150,10 @@ export const Library: React.FC = () => {
   }
 
   const handleDocumentAction = (documentId: string, action: 'view' | 'download' | 'delete') => {
-    // Handle document actions
+    if (action === 'view') {
+      navigate(`/read/${documentId}`)
+      return
+    }
     console.log(`Action: ${action} on document: ${documentId}`)
   }
 

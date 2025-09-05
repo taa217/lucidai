@@ -263,6 +263,18 @@ cd app && npm i @babel/standalone --save
   - `researchResultCard.maxWidth` set to `820` to avoid overly wide lines on large screens.
 - **User Impact**: Cleaner, more readable research threads; less visual dominance from the question line.
 
+### 🔎 Perplexity-style Research UI (Answer/Sources) — ✅ IMPLEMENTED
+- Change: Rebuilt the Research experience inside `LearningInterface` with a Perplexity-like layout.
+- Frontend:
+  - Answer/Sources tabs with streaming Answer view and clickable Sources list
+  - Follow-up question input supporting continuous sessions
+  - Minimal skeleton "Thinking…" state and error display
+- API Integration:
+  - Streams from backend `POST /api/agents/research/stream` (NDJSON)
+  - Consumes `{type:'content'|'final'|'sources'|'error'}` events
+- Files Updated: `app/src/pages/LearningInterface.tsx`
+- Status: ✅ Research mode works end-to-end; UI parity with our needs
+
 
 ### 💬 Chat persistence to NeonDB (sessions + messages) - ✅ IMPLEMENTED
 - **What**: Reader and general chats are now stored in Neon Postgres using normalized tables `chat_sessions` and `chat_messages` with sensible indexes for performance.
@@ -337,6 +349,7 @@ cd app && npm i @babel/standalone --save
   - File type indicators with appropriate icons and colors
   - Tag display with overflow handling for documents with many tags
   - Results summary showing filtered vs total document counts
+- **New Behavior**: Clicking any document in Library opens the reader at `/read/<docId>` (same as sidebar Recents behavior). Action buttons (view/download/delete) do not trigger card navigation.
 - **Status**: ✅ Complete library implementation with full search and document management functionality
 
 ### 📖 Library Screen Mock Removal & Error State - ✅ UPDATED

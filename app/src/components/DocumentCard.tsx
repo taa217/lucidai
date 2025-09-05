@@ -1,4 +1,5 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import { FileText, Download, Eye, Trash2, Calendar, Tag, MoreVertical } from 'lucide-react'
 import type { Document } from '../types'
 
@@ -13,6 +14,11 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
   viewMode,
   onAction
 }) => {
+  const navigate = useNavigate()
+
+  const openReader = () => {
+    navigate(`/read/${document.id}`)
+  }
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes'
     const k = 1024
@@ -54,7 +60,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
 
   if (viewMode === 'list') {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+      <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={openReader}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4 flex-1">
             <div className="text-2xl">{getFileIcon(document.mimeType)}</div>
@@ -74,7 +80,7 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
               </div>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => onAction(document.id, 'view')}
               className="p-2 text-gray-400 hover:text-primary-600 transition-colors"
@@ -121,10 +127,10 @@ export const DocumentCard: React.FC<DocumentCardProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer" onClick={openReader}>
       <div className="flex items-start justify-between mb-3">
         <div className="text-3xl">{getFileIcon(document.mimeType)}</div>
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-1" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={() => onAction(document.id, 'view')}
             className="p-1.5 text-gray-400 hover:text-primary-600 transition-colors"
