@@ -376,7 +376,7 @@ export const LearningInterface: React.FC = () => {
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   placeholder={isResearching ? 'Waiting for answer…' : 'Ask a follow-up question'}
-                  className="flex-1 outline-none text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-lg min-w-0"
+                  className="flex-1 outline-none text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-lg min-w-0 bg-transparent"
                   disabled={isResearching}
                 />
                 <button
@@ -419,7 +419,7 @@ export const LearningInterface: React.FC = () => {
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   placeholder="Ask anything. Type @ for mentions and / for shortcuts."
-                  className="flex-1 outline-none text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-lg min-w-0"
+                  className="flex-1 outline-none text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-lg min-w-0 bg-transparent"
                 />
                 {selectedMode === 'read' && (
                   <>
