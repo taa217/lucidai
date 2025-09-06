@@ -46,11 +46,13 @@ class TeacherAgent:
             "- Use inline styles only (backgroundColor, color, fontSize, padding, margin, etc.).\n"
             "- NO imports, NO require, NO external libraries, NO hooks beyond JSX itself.\n"
             "- DO NOT use React Native primitives like View/Text/Image.\n"
+            "- CRITICAL: Use stable keys and avoid dynamic component creation to prevent React errors.\n"
             "SYNC REQUIREMENTS:\n"
             "- Use timeSeconds (float, seconds) and timeline (array of { at:number, event:string }) to reveal beats.\n"
             "- Compute booleans like showIntro/showBeat2 by comparing timeSeconds against timeline thresholds.\n"
             "- Aim for 3–5 beats (intro + reveals). Each beat should add/change visuals (e.g., fade in title, highlight, simple diagram).\n"
             "- Keep under ~90 lines.\n"
+            "- Use CSS transitions instead of complex animations to prevent render conflicts.\n"
             "TONE: The learner is Clyde; keep it cool and encouraging."
         )
         user = (
@@ -113,21 +115,25 @@ class TeacherAgent:
         narration = self._extract_tag(text, "narration") or text.strip()[:220]
         code = self._extract_code_block(text) or (
             "function Lesson({ slide, showCaptions, isPlaying, timeSeconds, timeline }) {\n"
-            "  const fired = new Set((timeline || []).filter(t => (t?.at ?? 0) <= (timeSeconds || 0)).map(t => t.event));\n"
+            "  // Stable computation to prevent re-render issues\n"
+            "  const timelineArray = timeline || [];\n"
+            "  const currentTime = timeSeconds || 0;\n"
+            "  const fired = new Set(timelineArray.filter(t => (t?.at ?? 0) <= currentTime).map(t => t.event));\n"
             "  const showIntro = fired.has('intro') || fired.size === 0;\n"
             "  const beat2 = Array.from(fired).some(e => (e||'').includes('reveal:1') || (e||'').includes('reveal:main'));\n"
             "  const beat3 = Array.from(fired).some(e => (e||'').includes('reveal:2'));\n"
             "  const beat4 = Array.from(fired).some(e => (e||'').includes('reveal:3'));\n"
+            "  \n"
             "  return (\n"
             "    <div style={{ padding: '24px', backgroundColor: '#0f172a', color: '#e2e8f0', minHeight: '400px', fontFamily: 'Inter, Arial, sans-serif' }}>\n"
             "      <h1 style={{ fontSize: 24, fontWeight: 700, color: '#60a5fa', marginBottom: 12 }}>{slide?.title || 'Lesson'}</h1>\n"
-            "      {showIntro ? (<p style={{ opacity: 0.95 }}>Preparing interactive lesson…</p>) : null}\n"
+            "      {showIntro ? (<p style={{ opacity: 0.95, transition: 'opacity 0.3s ease' }}>Preparing interactive lesson…</p>) : null}\n"
             "      <div style={{ marginTop: 16 }}>\n"
             "        <svg width='100%' height='220' viewBox='0 0 800 220'>\n"
             "          <rect x='0' y='0' width='800' height='220' fill='#0b1220' stroke='#1f2a44' />\n"
-            "          <circle cx='120' cy='110' r='38' fill={beat2 ? '#22c55e' : '#334155'} />\n"
-            "          <rect x='200' y='72' width={beat3 ? 420 : 180} height='28' rx='6' fill='#334155' />\n"
-            "          <rect x='200' y='112' width={beat4 ? 360 : 140} height='24' rx='6' fill='#1f2a44' />\n"
+            "          <circle cx='120' cy='110' r='38' fill={beat2 ? '#22c55e' : '#334155'} style={{ transition: 'fill 0.3s ease' }} />\n"
+            "          <rect x='200' y='72' width={beat3 ? 420 : 180} height='28' rx='6' fill='#334155' style={{ transition: 'width 0.3s ease' }} />\n"
+            "          <rect x='200' y='112' width={beat4 ? 360 : 140} height='24' rx='6' fill='#1f2a44' style={{ transition: 'width 0.3s ease' }} />\n"
             "        </svg>\n"
             "      </div>\n"
             "    </div>\n"
@@ -147,6 +153,7 @@ class TeacherAgent:
             pass
 
         # Emit render first so UI can show content while TTS processes
+        # Use a basic timeline that will be updated after TTS processing
         yield TeacherEvent(
             type="render",
             session_id=session_id,
@@ -157,7 +164,7 @@ class TeacherAgent:
                 code=code,
                 language="tsx",
                 runtime_hints={"progressive": True},
-                timeline=[{"at": 0, "event": "intro"}, {"at": 6, "event": "reveal:main"}],
+                timeline=[{"at": 0, "event": "intro"}],  # Start with just intro, will be updated with precise timing
             ),
         )
 
@@ -185,7 +192,7 @@ class TeacherAgent:
                 timeline_events = []
                 if speak_payload.word_timestamps:
                     words = speak_payload.word_timestamps
-                    # Aim for ~4 beats
+                    # Aim for ~4 beats for better visual progression
                     num_beats = 4 if len(words) >= 28 else (3 if len(words) >= 14 else 2)
                     per = max(1, round(len(words) / num_beats))
                     idx = 0
@@ -197,11 +204,15 @@ class TeacherAgent:
                         end = float(chunk[-1].get("end", start))
                         seg = SpeakSegment(text=text_chunk, start_at=round(start, 2), duration_seconds=round(max(0.2, end - start), 2))
                         segments.append(seg)
-                        timeline_events.append({"at": round(start, 2), "event": f"reveal:{beat_no}"})
+                        # Use more descriptive event names for better visual coordination
+                        if beat_no == 1:
+                            timeline_events.append({"at": round(start, 2), "event": "reveal:main"})
+                        else:
+                            timeline_events.append({"at": round(start, 2), "event": f"reveal:{beat_no}"})
                         beat_no += 1
                         idx += per
                 else:
-                    # Fallback to naive sentence beats
+                    # Fallback to naive sentence beats with better timing
                     total_duration = speak_payload.duration_seconds or max(8.0, len(narration.split()) * 0.62)
                     import re
                     raw = [s.strip() for s in re.split(r"(?<=[\.!?])\s+", narration) if s.strip()]
@@ -218,7 +229,11 @@ class TeacherAgent:
                     for i, segment_text in enumerate(beats, start=1):
                         seg = SpeakSegment(text=segment_text, start_at=round(t, 2), duration_seconds=round(beat_dur, 2))
                         segments.append(seg)
-                        timeline_events.append({"at": round(t, 2), "event": f"reveal:{i}"})
+                        # Use more descriptive event names
+                        if i == 1:
+                            timeline_events.append({"at": round(t, 2), "event": "reveal:main"})
+                        else:
+                            timeline_events.append({"at": round(t, 2), "event": f"reveal:{i}"})
                         t += beat_dur
 
                 speak_payload.segments = segments

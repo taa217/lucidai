@@ -3,7 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Play, Pause, RotateCcw, Volume2, VolumeX } from 'lucide-react'
 import { apiService } from '../../services/api'
 import { CodeSlideRuntime } from './CodeSlideRuntime'
-import { TeacherEvent, TeacherSession, StartSessionRequest, StreamLessonRequest } from '../../types'
+import { TeacherEvent, TeacherSession, StreamLessonRequest } from '../../types'
+
+// Removed the old ErrorBoundary class as CodeSlideRuntime now includes its own
+// The onError prop in AITeacherSession will still receive errors from CodeSlideRuntime
 
 interface AITeacherSessionProps {
   topic: string
@@ -24,16 +27,18 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
   const [isPlaying, setIsPlaying] = useState(false)
   const [timeSeconds, setTimeSeconds] = useState(0)
   const [showReplay, setShowReplay] = useState(false)
-  const [isRepairing, setIsRepairing] = useState(false)
+  // No more isRepairing state here, CodeSlideRuntime manages internal error display/reporting
   
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const timeIntervalRef = useRef<NodeJS.Timeout | undefined>(undefined)
   const streamAbortRef = useRef<AbortController | undefined>(undefined)
 
-  // Start streaming lesson directly (like backup)
+  // Start streaming lesson directly
   const startStreaming = useCallback(async () => {
     setIsLoading(true)
     setError(null)
+    setTimeSeconds(0) // Reset time when starting a new stream
+    setShowReplay(false) // Hide replay UI
 
     try {
       const request: StreamLessonRequest = {
@@ -44,6 +49,10 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
         language: 'en'
       }
 
+      // Abort any existing stream before starting a new one
+      if (streamAbortRef.current) {
+        streamAbortRef.current.abort()
+      }
       streamAbortRef.current = new AbortController()
 
       await apiService.streamTeacherLesson({
@@ -52,39 +61,53 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
           handleTeacherEvent(event)
         },
         onError: (err: Error) => {
+          console.error("AITeacherSession: Stream error:", err)
           setError(err.message)
           onError?.(err)
         },
         onDone: () => {
           setIsLoading(false)
           setSession(prev => prev ? { ...prev, status: 'completed' } : null)
-          setShowReplay(true)
+          // Only show replay if no critical error occurred
+          if (!error) { 
+            setShowReplay(true)
+            stopTimeTracking() // Ensure time tracking stops
+          }
         }
       })
     } catch (err: any) {
-      setError(err.message)
-      onError?.(err)
+      if (err.name === 'AbortError') {
+        console.log("AITeacherSession: Stream aborted successfully.")
+      } else {
+        console.error("AITeacherSession: Failed to start streaming lesson:", err)
+        setError(err.message)
+        onError?.(err)
+      }
       setIsLoading(false)
     }
-  }, [topic, userId, onError])
+  }, [topic, userId, onError, error]) // Add error to dependencies to avoid showing replay on error
 
-    // Handle teacher events
+  // Handle teacher events
   const handleTeacherEvent = useCallback((event: TeacherEvent) => {
     setSession(prev => {
-      // Create session if it doesn't exist
-      if (!prev) {
-        const newSession: TeacherSession = {
-          sessionId: `teacher_${userId || 'anon'}_${Date.now()}`,
-          topic,
-          userId,
-          status: 'active',
-          isPlaying: false,
-          timeSeconds: 0
-        }
-        prev = newSession
+      // Create session if it doesn't exist (or update if new topic/session_id)
+      let currentSession = prev || {
+        sessionId: event.session_id || `teacher_${userId || 'anon'}_${Date.now()}`,
+        topic,
+        userId,
+        status: 'active',
+        isPlaying: false,
+        timeSeconds: 0,
+        renderCode: '',
+        timeline: [],
+        audioUrl: '',
+        currentEvent: event,
       }
 
-      const updated = { ...prev }
+      // Always update sessionId if a new one comes from the backend
+      if (event.session_id) currentSession.sessionId = event.session_id;
+
+      const updated = { ...currentSession }
 
       switch (event.type) {
         case 'start':
@@ -93,14 +116,13 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
 
         case 'render':
           if (event.render) {
-            updated.renderCode = event.render.code
-            updated.timeline = event.render.timeline
+            updated.renderCode = event.render.code || updated.renderCode // Keep old code if new is empty
+            updated.timeline = event.render.timeline || updated.timeline
           }
           break
 
         case 'speak':
           if (event.speak) {
-            // Resolve audio URL to orchestrator base when relative
             const resolveAudioUrl = (url?: string) => {
               if (!url) return undefined
               if (/^https?:/i.test(url)) return url
@@ -181,6 +203,14 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
       console.error('Audio playback error:', e)
       setIsPlaying(false)
       stopTimeTracking()
+      
+      // Try to recover from audio errors
+      setTimeout(() => {
+        if (session?.audioUrl) {
+          console.log('Retrying audio playback after error')
+          playAudio(session.audioUrl)
+        }
+      }, 2000)
     })
 
     audio.play().catch(err => {
@@ -193,9 +223,14 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
     stopTimeTracking()
     timeIntervalRef.current = setInterval(() => {
       if (audioRef.current) {
-        setTimeSeconds(audioRef.current.currentTime)
+        const newTime = audioRef.current.currentTime
+        // Only update if time has changed significantly to prevent excessive re-renders
+        setTimeSeconds(prevTime => {
+          const diff = Math.abs(newTime - prevTime)
+          return diff > 0.1 ? newTime : prevTime
+        })
       }
-    }, 100)
+    }, 200) // Reduced frequency to 200ms instead of 100ms
   }, [])
 
   const stopTimeTracking = useCallback(() => {
@@ -228,21 +263,30 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
     setTimeSeconds(0)
   }, [])
 
-  // Handle render errors
+  // Handle render errors from CodeSlideRuntime
   const handleRenderError = useCallback((error: Error) => {
-    console.error('Render error:', error)
-    setIsRepairing(true)
-    
-    // Show repairing overlay for a few seconds
-    setTimeout(() => {
-      setIsRepairing(false)
-    }, 3000)
-  }, [])
+    console.error('AITeacherSession: Render error received from CodeSlideRuntime:', error)
+    // CodeSlideRuntime now handles its own error display and reporting
+    // We just need to log it and potentially restart if needed
+    if (session && !session.renderCode) {
+      console.log('AITeacherSession: Attempting to restart lesson after render error')
+      startStreaming()
+    }
+  }, [session, startStreaming])
 
   // Start streaming on mount
   useEffect(() => {
     startStreaming()
   }, [startStreaming])
+
+  // Reset session state when topic changes
+  useEffect(() => {
+    setSession(null)
+    setError(null)
+    setIsPlaying(false)
+    setTimeSeconds(0)
+    setShowReplay(false)
+  }, [topic])
 
   // Cleanup on unmount
   useEffect(() => {
@@ -307,7 +351,7 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
             timeSeconds={timeSeconds}
             onError={handleRenderError}
             onRenderComplete={() => {
-              console.log('Render completed')
+              console.log('AITeacherSession: Render completed')
             }}
           />
         ) : (
@@ -337,22 +381,7 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
         )}
       </div>
 
-      {/* Repairing overlay */}
-      <AnimatePresence>
-        {isRepairing && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center"
-          >
-            <div className="bg-white rounded-lg p-6 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-3"></div>
-              <p className="text-gray-700">Repairing visuals...</p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Removed repairing overlay - CodeSlideRuntime handles its own error display */}
 
       {/* Replay overlay */}
       <AnimatePresence>

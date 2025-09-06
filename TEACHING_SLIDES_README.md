@@ -145,7 +145,7 @@ cd app && npm i @babel/standalone --save
 - The runtime exposes lightweight SVG primitives so the AI can draw diagrams directly in TSX without Mermaid.
 - Prefer SVG for reliability and fine control; keep shapes simple and readable. Mermaid remains supported as a convenience.
 
-### 🧑‍🏫 AI Teacher Frontend Integration - ✅ COMPLETED & FIXED
+### 🧑‍🏫 AI Teacher Frontend Integration - ✅ COMPLETED & ENHANCED
 - **What**: Complete frontend integration for the AI Teacher module with interactive learning sessions
 - **Components Created**:
   - `AITeacherSession.tsx` - Main session component that handles streaming and audio playback
@@ -171,6 +171,24 @@ cd app && npm i @babel/standalone --save
   - Clean session management with replay functionality
   - Responsive design that works on all screen sizes
 - **Status**: ✅ Complete frontend implementation ready for interactive learning
+
+### 🔧 Interactive Mode Runtime Fixes - ✅ COMPLETED (Latest)
+- **Problem**: React "removeChild" errors and unstable rendering in interactive mode causing visual glitches
+- **Root Cause**: Multiple React root creation, improper root management, and rendering conflicts
+- **Solution**: Comprehensive refactor of CodeSlideRuntime and AITeacherSession components
+- **Key Changes**:
+  - **One-time Root Initialization**: React root created only once per container, preventing conflicts
+  - **Stable Component Rendering**: Always render React.createElement(Component, props) instead of conditional rendering
+  - **Prop-driven Updates**: All props (isPlaying, timeSeconds, timeline) passed consistently for React reactivity
+  - **Removed Rendering Locks**: Eliminated anti-pattern locks that fought React's natural rendering cycle
+  - **Enhanced Error Boundary**: Integrated error boundary within dynamic component rendering
+  - **Improved Timeline Generation**: Agent now generates consistent timeline events with descriptive names
+- **Files Updated**:
+  - `app/src/components/ai-teacher/CodeSlideRuntime.tsx` - Complete refactor with stable root management
+  - `app/src/components/ai-teacher/AITeacherSession.tsx` - Simplified to work with improved CodeSlideRuntime
+  - `python_services/ai_teacher/agent.py` - Enhanced timeline generation with better event naming
+- **User Impact**: Smooth YouTube-like interactive experience with stable visuals and synchronized audio
+- **Status**: ✅ Interactive mode now provides seamless, error-free learning experience
 
 ### 🧑‍🏫 New AI Teacher Module (agentic runtime-first) - ADDED
 - What: A new backend module `python_services/ai_teacher` that streams a live teaching session as typed events the frontend can render like a YouTube-style lesson.
