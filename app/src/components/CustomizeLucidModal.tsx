@@ -14,7 +14,6 @@ export const CustomizeLucidModal: React.FC<CustomizeLucidModalProps> = ({ isOpen
   const [traits, setTraits] = useState('')
   const [extraNotes, setExtraNotes] = useState('')
   const [preferredLanguage, setPreferredLanguage] = useState('English')
-  const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
@@ -23,7 +22,6 @@ export const CustomizeLucidModal: React.FC<CustomizeLucidModalProps> = ({ isOpen
     if (!isOpen) return
     let ignore = false
     const fetchData = async () => {
-      setLoading(true)
       setError(null)
       setSaved(false)
       const resp = await apiService.getUserCustomization()
@@ -47,7 +45,6 @@ export const CustomizeLucidModal: React.FC<CustomizeLucidModalProps> = ({ isOpen
         }
       }
       if (!resp.success && !ignore) setError(resp.error || 'Failed to load preferences')
-      if (!ignore) setLoading(false)
     }
     fetchData()
     return () => { ignore = true }
@@ -86,7 +83,6 @@ export const CustomizeLucidModal: React.FC<CustomizeLucidModalProps> = ({ isOpen
           </button>
         </div>
         <div className="p-4 space-y-4">
-          {loading && <p className="text-sm text-gray-500 dark:text-gray-400">Loading…</p>}
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
           <div>
