@@ -69,6 +69,7 @@ export const createLibrarySection = (documents: Document[]): NavigationSection =
     title: 'Library',
     isCollapsible: false, // Not collapsible
     isExpanded: true,
+    icon: BookOpen,
     items: documentItems // Only show recent documents, header is clickable
   }
 }
@@ -78,6 +79,7 @@ export const librarySection: NavigationSection = {
   title: 'Library',
   isCollapsible: false,
   isExpanded: true,
+  icon: BookOpen,
   items: [] // Header is clickable, no duplicate items needed
 }
 
@@ -124,6 +126,7 @@ export const createRecentsSection = (sessions: RecentSession[]): NavigationSecti
     title: 'Recents',
     isCollapsible: false,
     isExpanded: true,
+    icon: Clock,
     items: recentItems
   }
 }
@@ -133,6 +136,7 @@ export const recentsSection: NavigationSection = {
   title: 'Recents',
   isCollapsible: false,
   isExpanded: true,
+  icon: Clock,
   items: []
 }
 

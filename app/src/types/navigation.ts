@@ -16,5 +16,6 @@ export interface NavigationSection {
   items: NavigationItem[]
   isCollapsible?: boolean
   isExpanded?: boolean
+  icon?: LucideIcon
 }
 

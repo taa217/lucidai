@@ -1,18 +1,18 @@
 import React from 'react'
-import { X, Brain } from 'lucide-react'
+import { Brain, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 
 interface SidebarHeaderProps {
   title: string
-  onClose?: () => void
-  showCloseButton?: boolean
   showLogo?: boolean
+  collapsed?: boolean
+  onToggleCollapsed?: () => void
 }
 
 export const SidebarHeader: React.FC<SidebarHeaderProps> = ({
   title,
-  onClose,
-  showCloseButton = false,
-  showLogo = true
+  showLogo = true,
+  collapsed = false,
+  onToggleCollapsed
 }) => {
   return (
     <div className="flex h-16 items-center justify-between px-6 border-b border-gray-200 dark:border-gray-700">
@@ -22,16 +22,19 @@ export const SidebarHeader: React.FC<SidebarHeaderProps> = ({
             <Brain className="w-5 h-5 text-white" />
           </div>
         )}
-        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{title}</h1>
+        {!collapsed && <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">{title}</h1>}
       </div>
-      {showCloseButton && onClose && (
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors duration-200"
-        >
-          <X size={24} />
-        </button>
-      )}
+      <div className="flex items-center">
+        {onToggleCollapsed && (
+          <button
+            onClick={onToggleCollapsed}
+            className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors duration-200 p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+          </button>
+        )}
+      </div>
     </div>
   )
 }

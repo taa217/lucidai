@@ -10,6 +10,7 @@ interface SidebarItemProps {
   isActive: boolean
   onClick?: () => void
   className?: string
+  collapsed?: boolean
 }
 
 export const SidebarItem: React.FC<SidebarItemProps> = ({
@@ -18,7 +19,8 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({
   icon: Icon,
   isActive,
   onClick,
-  className
+  className,
+  collapsed = false
 }) => {
   return (
     <Link
@@ -34,11 +36,12 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({
     >
       <Icon
         className={cn(
-          "mr-3 h-5 w-5 flex-shrink-0 transition-colors duration-200",
+          "h-5 w-5 flex-shrink-0 transition-colors duration-200",
+          !collapsed && "mr-3",
           isActive ? "text-primary-700 dark:text-primary-300" : "text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-300"
         )}
       />
-      {name}
+      {!collapsed && name}
     </Link>
   )
 }

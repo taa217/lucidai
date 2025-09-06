@@ -8,11 +8,13 @@ import { cn } from '../utils/cn'
 interface SidebarSectionProps {
   section: NavigationSection
   onItemClick?: () => void
+  collapsed?: boolean
 }
 
 export const SidebarSection: React.FC<SidebarSectionProps> = ({
   section,
-  onItemClick
+  onItemClick,
+  collapsed = false
 }) => {
   const [isExpanded, setIsExpanded] = useState(section.isExpanded ?? true)
   const navigate = useNavigate()
@@ -34,27 +36,36 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
   return (
     <div className="mb-4">
       {/* Section Header */}
-      <div 
+      <div
         className={cn(
           "flex w-full items-center justify-between px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300",
           (section.isCollapsible || section.title === 'Library') && "cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors"
         )}
         onClick={handleHeaderClick}
       >
-        <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-          {section.title}
-        </span>
-        <div className="flex items-center">
-          {section.isCollapsible ? (
-            isExpanded ? (
-              <ChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-            ) : (
-              <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-            )
-          ) : (
-            <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+        <div className="flex items-center space-x-2">
+          {section.icon && (
+            <section.icon className="h-4 w-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+          )}
+          {!collapsed && (
+            <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              {section.title}
+            </span>
           )}
         </div>
+        {!collapsed && (
+          <div className="flex items-center">
+            {section.isCollapsible ? (
+              isExpanded ? (
+                <ChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+              )
+            ) : (
+              <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+            )}
+          </div>
+        )}
       </div>
 
       {/* Section Items */}
@@ -69,6 +80,7 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
               isActive={false} // We'll handle this in the parent component
               onClick={onItemClick}
               className="ml-2"
+              collapsed={collapsed}
             />
           ))}
         </div>

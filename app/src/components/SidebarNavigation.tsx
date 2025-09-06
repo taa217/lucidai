@@ -9,12 +9,14 @@ interface SidebarNavigationProps {
   navigation?: NavigationItem[]
   sections?: NavigationSection[]
   onItemClick?: () => void
+  collapsed?: boolean
 }
 
 export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
   navigation = [],
   sections = [],
-  onItemClick
+  onItemClick,
+  collapsed = false
 }) => {
   const location = useLocation()
 
@@ -45,8 +47,8 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
                     "bg-primary-600 text-white hover:bg-primary-700"
                   )}
                 >
-                  <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
-                  {item.name}
+                  <item.icon className={cn("h-5 w-5 flex-shrink-0", !collapsed && "mr-3")} />
+                  {!collapsed && item.name}
                 </button>
               )
             }
@@ -59,6 +61,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
                 icon={item.icon}
                 isActive={isActive}
                 onClick={onItemClick}
+                collapsed={collapsed}
               />
             )
           })}
@@ -71,6 +74,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
           key={section.title}
           section={section}
           onItemClick={onItemClick}
+          collapsed={collapsed}
         />
       ))}
     </nav>

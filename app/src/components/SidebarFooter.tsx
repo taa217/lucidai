@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { SettingsModal } from './SettingsModal'
 import { CustomizeLucidModal } from './CustomizeLucidModal'
+import { cn } from '../utils/cn'
 
 interface SidebarFooterProps {
   userName?: string
@@ -11,6 +12,7 @@ interface SidebarFooterProps {
   profilePictureUrl?: string
   onCustomize?: () => void
   onSettings?: () => void
+  collapsed?: boolean
 }
 
 export const SidebarFooter: React.FC<SidebarFooterProps> = ({
@@ -18,7 +20,8 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
   userEmail = "user@example.com",
   profilePictureUrl,
   onCustomize,
-  onSettings
+  onSettings,
+  collapsed = false
 }) => {
   const { logout } = useAuth()
   const navigate = useNavigate()
@@ -84,19 +87,24 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
             </span>
           )}
         </div>
-        <div className="flex-1 min-w-0 text-left">
-          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-            {userName}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-            {userEmail}
-          </p>
-        </div>
+        {!collapsed && (
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+              {userName}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+              {userEmail}
+            </p>
+          </div>
+        )}
       </button>
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute bottom-full left-4 right-4 mb-2 z-50 rounded-md shadow-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
+        <div className={cn(
+          "absolute bottom-full mb-2 z-50 rounded-md shadow-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800",
+          collapsed ? "left-2 w-64" : "left-4 right-4"
+        )}>
           <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-600">
             <p className="text-xs text-gray-500 dark:text-gray-400">Signed in as</p>
             <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{userEmail}</p>

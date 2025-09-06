@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Sidebar } from './Sidebar'
 import { newSessionItem, createLibrarySection, createRecentsSection } from '../config/navigation'
 import { useAuth } from '../contexts/AuthContext'
@@ -10,13 +10,14 @@ interface LearningSidebarProps {
   setSidebarOpen: (open: boolean) => void
 }
 
-export const LearningSidebar: React.FC<LearningSidebarProps> = ({ 
-  sidebarOpen, 
+export const LearningSidebar: React.FC<LearningSidebarProps> = ({
+  sidebarOpen,
   setSidebarOpen
 }) => {
   const { user } = useAuth()
   const { sessions, loading: sessionsLoading } = useRecentSessions(user?.id || null, 10)
   const { documents, loading: documentsLoading } = useRecentDocuments(user?.id || null, 2)
+  const [collapsed, setCollapsed] = useState(false)
   
   const userName = user?.fullName || user?.email || "User"
   const userEmail = user?.email || ""
@@ -42,6 +43,8 @@ export const LearningSidebar: React.FC<LearningSidebarProps> = ({
       userEmail={userEmail}
       profilePictureUrl={profilePictureUrl}
       showLogo={true}
+      collapsed={collapsed}
+      onToggleCollapsed={() => setCollapsed(!collapsed)}
     />
   )
 }

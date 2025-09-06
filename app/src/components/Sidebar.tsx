@@ -17,6 +17,8 @@ export interface SidebarProps {
   userEmail?: string
   profilePictureUrl?: string
   showLogo?: boolean
+  collapsed?: boolean
+  onToggleCollapsed?: () => void
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -30,7 +32,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   userName,
   userEmail,
   profilePictureUrl,
-  showLogo = true
+  showLogo = true,
+  collapsed = false,
+  onToggleCollapsed
 }) => {
   const handleItemClick = () => {
     if (setSidebarOpen) {
@@ -40,18 +44,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const renderSidebarContent = () => (
     <>
-      <SidebarHeader 
-        title={title} 
-        onClose={setSidebarOpen ? () => setSidebarOpen(false) : undefined}
-        showCloseButton={!!setSidebarOpen}
+      <SidebarHeader
+        title={title}
         showLogo={showLogo}
+        collapsed={collapsed}
+        onToggleCollapsed={onToggleCollapsed}
       />
       {/* Scrollable navigation content */}
       <div className="flex-1 overflow-y-auto min-h-0">
-        <SidebarNavigation 
+        <SidebarNavigation
           navigation={navigation}
           sections={sections}
           onItemClick={handleItemClick}
+          collapsed={collapsed}
         />
       </div>
       {/* Fixed footer */}
@@ -59,6 +64,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         userName={userName}
         userEmail={userEmail}
         profilePictureUrl={profilePictureUrl}
+        collapsed={collapsed}
       />
     </>
   )
@@ -80,7 +86,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Desktop sidebar */}
       {(variant === 'desktop' || variant === 'both') && (
-        <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
+        <div className={cn("hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col overflow-visible", collapsed ? "lg:w-16" : "lg:w-64")}>
           <div className={cn("flex flex-col h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700", className)}>
             {renderSidebarContent()}
           </div>
