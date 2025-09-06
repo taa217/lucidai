@@ -15,6 +15,7 @@ export interface SidebarProps {
   className?: string
   userName?: string
   userEmail?: string
+  profilePictureUrl?: string
   showLogo?: boolean
 }
 
@@ -28,6 +29,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   className,
   userName,
   userEmail,
+  profilePictureUrl,
   showLogo = true
 }) => {
   const handleItemClick = () => {
@@ -53,9 +55,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
         />
       </div>
       {/* Fixed footer */}
-      <SidebarFooter 
+      <SidebarFooter
         userName={userName}
         userEmail={userEmail}
+        profilePictureUrl={profilePictureUrl}
       />
     </>
   )
@@ -69,7 +72,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           sidebarOpen ? "block" : "hidden"
         )}>
           <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
-          <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white h-full">
+          <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white dark:bg-gray-800 h-full">
             {renderSidebarContent()}
           </div>
         </div>
@@ -78,7 +81,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Desktop sidebar */}
       {(variant === 'desktop' || variant === 'both') && (
         <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-          <div className={cn("flex flex-col h-full bg-white border-r border-gray-200", className)}>
+          <div className={cn("flex flex-col h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700", className)}>
             {renderSidebarContent()}
           </div>
         </div>

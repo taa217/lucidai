@@ -128,13 +128,13 @@ export const UploadModal: React.FC<UploadModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">Upload Document</h2>
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Upload Document</h2>
           <button
             onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             disabled={isUploading}
           >
             <X size={24} />
@@ -145,14 +145,14 @@ export const UploadModal: React.FC<UploadModalProps> = ({
         <div className="p-6 space-y-6">
           {/* File Upload Area */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Select File
             </label>
             <div
               className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
                 file
                   ? 'border-green-300 bg-green-50'
-                  : 'border-gray-300 hover:border-gray-400'
+                  : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
               }`}
               onDragOver={handleDragOver}
               onDrop={handleDrop}
@@ -160,11 +160,11 @@ export const UploadModal: React.FC<UploadModalProps> = ({
               {file ? (
                 <div className="space-y-2">
                   <div className="text-4xl">{getFileIcon(file.type)}</div>
-                  <div className="text-sm font-medium text-gray-900">{file.name}</div>
-                  <div className="text-xs text-gray-500">{formatFileSize(file.size)}</div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{file.name}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{formatFileSize(file.size)}</div>
                   <button
                     onClick={() => setFile(null)}
-                    className="text-xs text-red-600 hover:text-red-700"
+                    className="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
                     disabled={isUploading}
                   >
                     Remove file
@@ -172,11 +172,11 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <Upload className="mx-auto text-gray-400" size={32} />
-                  <div className="text-sm text-gray-600">
+                  <Upload className="mx-auto text-gray-400 dark:text-gray-500" size={32} />
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
                     <span className="font-medium text-primary-600">Click to upload</span> or drag and drop
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
                     PDF, DOC, DOCX, TXT, images, and more
                   </div>
                 </div>
@@ -193,7 +193,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
             {!file && (
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="mt-2 w-full py-2 px-4 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                className="mt-2 w-full py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 bg-white dark:bg-gray-800 transition-colors"
                 disabled={isUploading}
               >
                 Choose File
@@ -203,7 +203,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
 
           {/* Tags */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               <Tag size={16} className="inline mr-1" />
               Tags (optional)
             </label>
@@ -212,10 +212,10 @@ export const UploadModal: React.FC<UploadModalProps> = ({
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="e.g., work, important, project"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               disabled={isUploading}
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Separate multiple tags with commas
             </p>
           </div>
@@ -227,17 +227,17 @@ export const UploadModal: React.FC<UploadModalProps> = ({
                 type="checkbox"
                 checked={isPublic}
                 onChange={(e) => setIsPublic(e.target.checked)}
-                className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                className="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500"
                 disabled={isUploading}
               />
               <div className="flex items-center space-x-2">
-                {isPublic ? <Eye size={16} className="text-green-600" /> : <EyeOff size={16} className="text-gray-400" />}
-                <span className="text-sm text-gray-700">
+                {isPublic ? <Eye size={16} className="text-green-600" /> : <EyeOff size={16} className="text-gray-400 dark:text-gray-500" />}
+                <span className="text-sm text-gray-700 dark:text-gray-300">
                   Make this document public
                 </span>
               </div>
             </label>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Public documents can be accessed by other users
             </p>
           </div>
@@ -276,10 +276,10 @@ export const UploadModal: React.FC<UploadModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end space-x-3 p-6 border-t bg-gray-50">
+        <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <button
             onClick={handleClose}
-            className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
             disabled={isUploading}
           >
             Cancel

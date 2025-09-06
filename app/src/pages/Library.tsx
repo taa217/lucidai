@@ -166,7 +166,7 @@ export const Library: React.FC = () => {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-        <span className="ml-2 text-gray-600">
+        <span className="ml-2 text-gray-600 dark:text-gray-400">
           {authLoading ? 'Authenticating...' : 'Loading documents...'}
         </span>
       </div>
@@ -179,8 +179,8 @@ export const Library: React.FC = () => {
         <div className="text-red-500 mb-4">
           <FileText size={48} />
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Documents</h3>
-        <p className="text-gray-600 mb-4">{error}</p>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Error Loading Documents</h3>
+        <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
         <button
           onClick={fetchDocuments}
           className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
@@ -197,8 +197,8 @@ export const Library: React.FC = () => {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Library</h1>
-            <p className="text-gray-600">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">Library</h1>
+            <p className="text-gray-600 dark:text-gray-400">
               Manage and organize your uploaded documents
             </p>
           </div>
@@ -216,18 +216,18 @@ export const Library: React.FC = () => {
       <div className="mb-6 space-y-4">
         {/* Search Bar */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500" size={20} />
           <input
             type="text"
             placeholder="Search by filename, tags, type, size (e.g., pdf, large, small)..."
             value={searchQuery}
             onChange={handleSearchChange}
-            className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
           />
           {searchQuery && (
             <button
               onClick={handleClearSearch}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               title="Clear search"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -241,11 +241,11 @@ export const Library: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           {/* Sort Options */}
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600">Sort by:</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Sort by:</span>
             <select
               value={sortBy}
               onChange={(e) => handleSortChange(e.target.value as 'date' | 'name' | 'size')}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             >
               <option value="date">Date</option>
               <option value="name">Name</option>
@@ -259,8 +259,8 @@ export const Library: React.FC = () => {
               onClick={() => handleViewModeChange('grid')}
               className={`p-2 rounded-lg transition-colors ${
                 viewMode === 'grid'
-                  ? 'bg-primary-100 text-primary-600'
-                  : 'text-gray-400 hover:text-gray-600'
+                  ? 'bg-primary-100 dark:bg-primary-900/20 text-primary-600 dark:text-primary-300'
+                  : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
               }`}
             >
               <Grid size={20} />
@@ -269,8 +269,8 @@ export const Library: React.FC = () => {
               onClick={() => handleViewModeChange('list')}
               className={`p-2 rounded-lg transition-colors ${
                 viewMode === 'list'
-                  ? 'bg-primary-100 text-primary-600'
-                  : 'text-gray-400 hover:text-gray-600'
+                  ? 'bg-primary-100 dark:bg-primary-900/20 text-primary-600 dark:text-primary-300'
+                  : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
               }`}
             >
               <List size={20} />
@@ -282,13 +282,13 @@ export const Library: React.FC = () => {
       {/* Documents Grid/List */}
       {filteredDocuments.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-64 text-center">
-          <div className="text-gray-400 mb-4">
+          <div className="text-gray-400 dark:text-gray-500 mb-4">
             <FileText size={64} />
           </div>
-                     <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
              {searchQuery ? 'No documents found' : 'No documents yet'}
            </h3>
-           <p className="text-gray-600 mb-4">
+           <p className="text-gray-600 dark:text-gray-400 mb-4">
              {searchQuery
                ? `No documents match "${searchQuery}". Try different keywords or check your spelling.`
                : 'Upload your first document to get started'}
@@ -296,12 +296,12 @@ export const Library: React.FC = () => {
            {searchQuery ? (
              <button
                onClick={handleClearSearch}
-               className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+               className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
              >
                Clear Search
              </button>
            ) : (
-             <button 
+             <button
                onClick={() => setIsUploadModalOpen(true)}
                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
              >
@@ -330,12 +330,12 @@ export const Library: React.FC = () => {
 
              {/* Results Summary */}
        {filteredDocuments.length > 0 && (
-         <div className="mt-8 text-center text-sm text-gray-600">
+         <div className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
            {searchQuery ? (
              <>
                Found {filteredDocuments.length} document{filteredDocuments.length !== 1 ? 's' : ''} for "{searchQuery}"
                {filteredDocuments.length < documents.length && (
-                 <span className="ml-2 text-gray-500">
+                 <span className="ml-2 text-gray-500 dark:text-gray-500">
                    (of {documents.length} total)
                  </span>
                )}

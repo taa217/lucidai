@@ -181,21 +181,21 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   }
 
   return (
-    <div className={`flex flex-col h-full bg-white ${className}`}>
+    <div className={`flex flex-col h-full bg-white dark:bg-gray-900 ${className}`}>
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
         {isLoadingHistory && (
           <div className="flex justify-center items-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-            <span className="ml-2 text-gray-500">Loading chat history...</span>
+            <Loader2 className="h-6 w-6 animate-spin text-gray-400 dark:text-gray-500" />
+            <span className="ml-2 text-gray-500 dark:text-gray-400">Loading chat history...</span>
           </div>
         )}
 
         {!isLoadingHistory && messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <Bot className="h-12 w-12 text-gray-400 mb-4" />
-            <h4 className="text-lg font-medium text-gray-900 mb-2">Start a Conversation</h4>
-            <p className="text-gray-500 max-w-sm">
+            <Bot className="h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
+            <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Start a Conversation</h4>
+            <p className="text-gray-500 dark:text-gray-400 max-w-sm">
               Ask a question about your document or any topic. I'm here to help!
             </p>
           </div>
@@ -216,7 +216,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center ${
                   message.role === 'user'
                     ? 'bg-blue-600 text-white ml-2'
-                    : 'bg-gray-200 text-gray-600 mr-2'
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 mr-2'
                 }`}
               >
                 {message.role === 'user' ? (
@@ -230,13 +230,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               <div className="flex-1">
                 <div
                   className={`text-sm leading-relaxed ${
-                    message.role === 'user' ? 'text-gray-900' : 'text-gray-700'
+                    message.role === 'user' ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'
                   }`}
                   dangerouslySetInnerHTML={{
                     __html: formatMessage(message.content)
                   }}
                 />
-                <div className="text-xs text-gray-400 mt-1">
+                <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                   {new Date(message.createdAt).toLocaleTimeString()}
                 </div>
               </div>
@@ -247,11 +247,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         {isLoading && (
           <div className="flex justify-start">
             <div className="flex max-w-[90%]">
-              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-200 text-gray-600 mr-2 flex items-center justify-center">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 mr-2 flex items-center justify-center">
                 <Bot className="h-3 w-3" />
               </div>
               <div className="flex-1">
-                <div className="flex items-center space-x-2 text-gray-600">
+                  <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   <span className="text-sm">Thinking...</span>
                 </div>
@@ -264,14 +264,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </div>
 
       {/* Input Area */}
-      <div className="flex-shrink-0 p-4 border-t border-gray-200">
+      <div className="flex-shrink-0 p-4 border-t border-gray-200 dark:border-gray-700">
         <form onSubmit={handleSubmit} className="flex space-x-2">
           <input
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="Ask a question about the document..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
             disabled={isLoading}
           />
           <button

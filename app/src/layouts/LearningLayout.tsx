@@ -9,26 +9,26 @@ export const LearningLayout: React.FC<LearningLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Mobile menu button */}
       <div className="lg:hidden fixed top-4 left-4 z-40">
         <button
           onClick={() => setSidebarOpen(true)}
-          className="p-2 bg-white rounded-md shadow-md hover:bg-gray-50 transition-colors duration-200"
+          className="p-2 bg-white dark:bg-gray-800 rounded-md shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
         >
-          <Menu className="h-6 w-6 text-gray-600" />
+          <Menu className="h-6 w-6 text-gray-600 dark:text-gray-400" />
         </button>
       </div>
 
       {/* Sidebar */}
-      <LearningSidebar 
-        sidebarOpen={sidebarOpen} 
-        setSidebarOpen={setSidebarOpen} 
+      <LearningSidebar
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
       />
 
       {/* Main content */}
       <div className="lg:pl-64">
-        <main className="min-h-screen">
+        <main className="min-h-screen bg-gray-50 dark:bg-gray-900">
           {children}
         </main>
       </div>

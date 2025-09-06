@@ -292,13 +292,13 @@ export const LearningInterface: React.FC = () => {
 
         <div className="flex-1 overflow-auto bg-transparent p-0">
           {/* Sticky query header like Perplexity */}
-          <div className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-gray-100 px-6 pt-4 pb-3">
-            <h2 className="text-[22px] font-semibold text-gray-900 mb-2">{researchQuery || 'Research'}</h2>
-            <div className="flex items-center space-x-2 bg-gray-100 rounded-full p-1 w-fit">
+          <div className="sticky top-0 z-10 bg-white/80 dark:bg-gray-900/80 backdrop-blur border-b border-gray-100 dark:border-gray-700 px-6 pt-4 pb-3">
+            <h2 className="text-[22px] font-semibold text-gray-900 dark:text-gray-100 mb-2">{researchQuery || 'Research'}</h2>
+            <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-full p-1 w-fit">
               <button
                 onClick={() => setActiveResearchTab('answer')}
                 className={`px-4 py-1.5 rounded-full text-sm ${
-                  activeResearchTab === 'answer' ? 'bg-white shadow text-gray-900' : 'text-gray-700'
+                  activeResearchTab === 'answer' ? 'bg-white dark:bg-gray-800 shadow text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'
                 }`}
               >
                 Answer
@@ -306,7 +306,7 @@ export const LearningInterface: React.FC = () => {
               <button
                 onClick={() => setActiveResearchTab('sources')}
                 className={`px-4 py-1.5 rounded-full text-sm ${
-                  activeResearchTab === 'sources' ? 'bg-white shadow text-gray-900' : 'text-gray-700'
+                  activeResearchTab === 'sources' ? 'bg-white dark:bg-gray-800 shadow text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'
                 }`}
               >
                 Sources {researchSources.length ? `(${researchSources.length})` : ''}
@@ -317,10 +317,10 @@ export const LearningInterface: React.FC = () => {
             {/* Thread list (newest first) */}
             {threads.map((t, idx) => (
               <div key={t.id} className="max-w-3xl pr-2">
-                <div className="text-sm font-medium text-gray-500 mb-2">{t.query}</div>
+                <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">{t.query}</div>
                 {activeResearchTab === 'answer' ? (
-                  <div className="text-[15px] leading-7 text-gray-900">
-                    {t.answer ? renderMarkdown(t.answer) : (idx === 0 && isResearching ? <p className="text-gray-500">Thinking…</p> : null)}
+                  <div className="text-[15px] leading-7 text-gray-900 dark:text-gray-100">
+                    {t.answer ? renderMarkdown(t.answer) : (idx === 0 && isResearching ? <p className="text-gray-500 dark:text-gray-400">Thinking…</p> : null)}
                   </div>
                 ) : (
                   <div className="max-w-4xl">
@@ -336,19 +336,19 @@ export const LearningInterface: React.FC = () => {
                               href={s.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="flex items-start gap-3 p-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+                              className="flex items-start gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                             >
                               {favicon ? <img src={favicon} alt="" className="mt-0.5 h-4 w-4" /> : <div className="mt-1 h-4 w-4 rounded bg-gray-200" />}
                               <div>
-                                <div className="text-sm font-medium text-gray-900">{s.title || s.url}</div>
-                                {domain ? <div className="text-xs text-gray-500">{domain}</div> : null}
+                                <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{s.title || s.url}</div>
+                                {domain ? <div className="text-xs text-gray-500 dark:text-gray-400">{domain}</div> : null}
                               </div>
                             </a>
                           )
                         })}
                       </div>
                     ) : (
-                      idx === 0 && isResearching ? <p className="text-gray-500">Gathering sources…</p> : <p className="text-gray-500">No sources.</p>
+                      idx === 0 && isResearching ? <p className="text-gray-500 dark:text-gray-400">Gathering sources…</p> : <p className="text-gray-500 dark:text-gray-400">No sources.</p>
                     )}
                   </div>
                 )}
@@ -369,14 +369,14 @@ export const LearningInterface: React.FC = () => {
           className="mt-4 sticky bottom-3 self-center w-full"
         >
           <div className="relative w-full max-w-3xl mx-auto">
-            <div className="bg-white border border-gray-300 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 w-full">
+            <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 w-full">
               <div className="flex items-center px-6 py-4">
                 <input
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   placeholder={isResearching ? 'Waiting for answer…' : 'Ask a follow-up question'}
-                  className="flex-1 outline-none text-gray-900 placeholder-gray-500 text-lg min-w-0"
+                  className="flex-1 outline-none text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-lg min-w-0"
                   disabled={isResearching}
                 />
                 <button
@@ -403,7 +403,7 @@ export const LearningInterface: React.FC = () => {
         className="text-center w-full max-w-4xl mx-auto flex flex-col items-center"
       >
         {/* Main prompt text */}
-        <h1 className="text-4xl font-bold text-gray-900 mb-12 text-center">
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-12 text-center">
           What do you want to learn?
         </h1>
 
@@ -411,7 +411,7 @@ export const LearningInterface: React.FC = () => {
         <form onSubmit={handleSubmit} className="w-full max-w-3xl flex justify-center">
           <div className="relative w-full">
             {/* Input field with integrated mode selection */}
-            <div className="bg-white border border-gray-300 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 w-full">
+            <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 w-full">
               {/* Input row */}
               <div className="flex items-center px-6 py-4">
                 <input
@@ -419,7 +419,7 @@ export const LearningInterface: React.FC = () => {
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   placeholder="Ask anything. Type @ for mentions and / for shortcuts."
-                  className="flex-1 outline-none text-gray-900 placeholder-gray-500 text-lg min-w-0"
+                  className="flex-1 outline-none text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-lg min-w-0"
                 />
                 {selectedMode === 'read' && (
                   <>
@@ -452,15 +452,15 @@ export const LearningInterface: React.FC = () => {
               
               {/* Mode selection icons at bottom, aligned to left - reduced height */}
               <div className="flex items-center px-6 pb-1">
-                <div className="flex items-center space-x-1 bg-gray-50 rounded-lg px-2 py-1">
+                <div className="flex items-center space-x-1 bg-gray-50 dark:bg-gray-700 rounded-lg px-2 py-1">
                   {/* Interactive Mode */}
                   <button
                     onClick={() => handleModeChange('interactive')}
                     title="Interactive"
                     className={`p-2 rounded-md transition-all duration-200 ${
                       selectedMode === 'interactive'
-                        ? 'bg-primary-100 border border-primary-300 text-primary-700'
-                        : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                        ? 'bg-primary-100 dark:bg-primary-900/20 border border-primary-300 dark:border-primary-600 text-primary-700 dark:text-primary-300'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600'
                     }`}
                   >
                     <Play className="h-4 w-4" />
@@ -472,8 +472,8 @@ export const LearningInterface: React.FC = () => {
                     title="Read"
                     className={`p-2 rounded-md transition-all duration-200 ${
                       selectedMode === 'read'
-                        ? 'bg-primary-100 border border-primary-300 text-primary-700'
-                        : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                        ? 'bg-primary-100 dark:bg-primary-900/20 border border-primary-300 dark:border-primary-600 text-primary-700 dark:text-primary-300'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600'
                     }`}
                   >
                     <BookOpen className="h-4 w-4" />
@@ -485,8 +485,8 @@ export const LearningInterface: React.FC = () => {
                     title="Research"
                     className={`p-2 rounded-md transition-all duration-200 ${
                       selectedMode === 'research'
-                        ? 'bg-primary-100 border border-primary-300 text-primary-700'
-                        : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                        ? 'bg-primary-100 dark:bg-primary-900/20 border border-primary-300 dark:border-primary-600 text-primary-700 dark:text-primary-300'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600'
                     }`}
                   >
                     <Brain className="h-4 w-4" />
@@ -498,7 +498,7 @@ export const LearningInterface: React.FC = () => {
         </form>
 
         {/* Optional subtitle */}
-        <p className="mt-8 text-gray-600 text-lg text-center">
+        <p className="mt-8 text-gray-600 dark:text-gray-400 text-lg text-center">
           Start your learning journey with AI-powered assistance
         </p>
       </motion.div>

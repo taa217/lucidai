@@ -20,6 +20,7 @@ export const LearningSidebar: React.FC<LearningSidebarProps> = ({
   
   const userName = user?.fullName || user?.email || "User"
   const userEmail = user?.email || ""
+  const profilePictureUrl = user?.profilePictureUrl
 
   // Create sections from real data
   const librarySection = createLibrarySection(documents)
@@ -39,6 +40,7 @@ export const LearningSidebar: React.FC<LearningSidebarProps> = ({
       variant="both"
       userName={userName}
       userEmail={userEmail}
+      profilePictureUrl={profilePictureUrl}
       showLogo={true}
     />
   )

@@ -28,6 +28,7 @@ export const SidebarDemo: React.FC = () => {
             variant="desktop"
             userName="Demo User"
             userEmail="demo@example.com"
+            profilePictureUrl="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face"
           />
           <div className="ml-64 p-4">
             <p className="text-gray-600">Main content area - sidebar is on the left</p>
@@ -53,6 +54,7 @@ export const SidebarDemo: React.FC = () => {
             variant="mobile"
             userName="Mobile User"
             userEmail="mobile@example.com"
+            profilePictureUrl="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=32&h=32&fit=crop&crop=face"
           />
           <div className="p-4">
             <p className="text-gray-600">Mobile content area - click button above to open sidebar</p>
