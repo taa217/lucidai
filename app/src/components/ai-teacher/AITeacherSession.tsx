@@ -68,11 +68,8 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
         onDone: () => {
           setIsLoading(false)
           setSession(prev => prev ? { ...prev, status: 'completed' } : null)
-          // Only show replay if no critical error occurred
-          if (!error) { 
-            setShowReplay(true)
-            stopTimeTracking() // Ensure time tracking stops
-          }
+          // Don't show replay here - let audio 'ended' event handle it
+          stopTimeTracking() // Ensure time tracking stops
         }
       })
     } catch (err: any) {
@@ -155,7 +152,7 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
 
         case 'final':
           updated.status = 'completed'
-          setShowReplay(true)
+          // Don't show replay here - let audio 'ended' event handle it
           break
       }
 

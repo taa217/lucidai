@@ -86,26 +86,26 @@ export const CustomizeLucidModal: React.FC<CustomizeLucidModalProps> = ({ isOpen
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Display name</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">What should Lucid call you?</label>
             <input value={displayName} onChange={(e) => setDisplayName(e.target.value)}
                    className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" placeholder="e.g., Clyde" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Occupation</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">What do you do?</label>
             <input value={occupation} onChange={(e) => setOccupation(e.target.value)}
                    className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" placeholder="e.g., Entrepreneur, Student" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Traits</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">What traits should Lucid have?</label>
             <input value={traits} onChange={(e) => setTraits(e.target.value)}
                    className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" placeholder="e.g., Innovative, Forward thinking, Formal" />
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Short comma-separated descriptors.</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Extra notes</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Anything else Lucid should know about you?</label>
             <textarea value={extraNotes} onChange={(e) => setExtraNotes(e.target.value)}
                       className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" rows={3} placeholder="Anything else Lucid should know" />
           </div>
