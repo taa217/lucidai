@@ -63,7 +63,7 @@ export class UserPreferences {
   @Column({ type: 'boolean', default: false })
   highContrast: boolean;
 
-  @Column({ type: 'varchar', length: 10, default: 'English' })
+  @Column({ type: 'varchar', length: 200, default: 'English' })
   language: string;
 
   // Learning Preferences

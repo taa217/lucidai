@@ -113,7 +113,7 @@ export const CustomizeLucidModal: React.FC<CustomizeLucidModalProps> = ({ isOpen
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Preferred language</label>
             <input value={preferredLanguage} onChange={(e) => setPreferredLanguage(e.target.value)}
-                   className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" placeholder="English" />
+                   className="mt-1 w-full rounded-md border border-gray-300 dark:border-gray-600 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100" placeholder="English, Spanish, or e.g., 'cool English with a British accent'" />
           </div>
         </div>
         <div className="p-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-end gap-2 bg-gray-50 dark:bg-gray-800">
