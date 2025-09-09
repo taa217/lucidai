@@ -227,7 +227,7 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
           return diff > 0.1 ? newTime : prevTime
         })
       }
-    }, 200) // Reduced frequency to 200ms instead of 100ms
+    }, 100) // Increased update frequency for smoother motion
   }, [])
 
   const stopTimeTracking = useCallback(() => {

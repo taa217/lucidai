@@ -145,6 +145,22 @@ cd app && npm i @babel/standalone --save
 - The runtime exposes lightweight SVG primitives so the AI can draw diagrams directly in TSX without Mermaid.
 - Prefer SVG for reliability and fine control; keep shapes simple and readable. Mermaid remains supported as a convenience.
 
+### 🎬 Cinematic Runtime & Motion Helpers — NEW
+- The interactive runtime now adds a subtle, always-on cinematic background and exposes lightweight motion helpers to generated TSX so lessons feel like smooth YouTube videos rather than stepwise "beats".
+- Available helpers inside the TSX environment:
+  - `motion.time`: alias for `timeSeconds`
+  - `motion.lerp(a,b,t)`, `motion.clamp(x,min,max)`, `motion.easeInOut(t)`
+  - `motion.phaseProgress(phase)`: returns 0→1 progress between a timeline event and the next (phase can be index or event name substring)
+- Guidance for generated code:
+  - Derive transforms (translate/scale/rotate), opacity, and positions from `motion.time` and `motion.phaseProgress(...)` for continuous motion.
+  - Use timeline events as anchors; animate between them using progress rather than only toggling visibility.
+  - Favor transform-based motion for smoothness; minimal reliance on CSS transitions.
+- Frontend changes:
+  - `CodeSlideRuntime` wraps visuals with an always-moving cinematic background (blurred radial blobs + gentle drift) synced to audio time.
+  - `AITeacherSession` increases audio time polling to 100ms for smoother animation updates.
+- Backend changes:
+  - `python_services/ai_teacher/agent.py` prompt updated to encourage continuous, time-driven motion using the helpers (no imports/hooks required).
+
 ### 👤 User Customization Integration (Latest) - ✅ IMPLEMENTED
 - **What**: User preferences from "Customize Lucid" modal are now integrated into AI teacher prompts for personalized learning experiences
 - **Features**:
