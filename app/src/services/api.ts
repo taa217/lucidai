@@ -450,6 +450,11 @@ export const apiService = {
       const resp = await fetch(url, {
         method: 'POST',
         headers,
+        // Be explicit to avoid browser/network intermediaries interfering with the stream
+        mode: 'cors',
+        cache: 'no-store',
+        credentials: 'omit',
+        keepalive: false,
         body: JSON.stringify(request),
       })
       if (!resp.ok || !resp.body) {

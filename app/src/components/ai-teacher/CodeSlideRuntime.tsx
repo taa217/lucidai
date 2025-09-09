@@ -98,6 +98,7 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
   const [renderError, setRenderError] = useState<RuntimeError | null>(null)
   const [isCompiling, setIsCompiling] = useState(false)
   const [isFixing, setIsFixing] = useState(false)
+  const [babelReady, setBabelReady] = useState<boolean>(typeof window !== 'undefined' && !!window.Babel)
   
   // Ref for the DOM container where React will render
   const containerRef = useRef<HTMLDivElement>(null)
@@ -387,6 +388,7 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
   // Effect to manage Babel loading
   useEffect(() => {
     if (window.Babel) {
+      setBabelReady(true)
       return // Babel already loaded
     }
 
@@ -395,7 +397,7 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
     script.async = true
     script.onload = () => {
       console.log('CodeSlideRuntime: Babel loaded successfully.')
-      // No need to trigger a recompile here, the main code effect will run
+      setBabelReady(true)
     }
     script.onerror = () => {
       console.error('CodeSlideRuntime: Failed to load Babel.')
@@ -425,7 +427,7 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
       setRenderError(null) // Clear previous errors
       setLessonComponent(null) // Clear previous component
 
-      if (!window.Babel) {
+      if (!window.Babel || !babelReady) {
         // If Babel isn't loaded yet, just show compiling state and wait for it
         console.log('CodeSlideRuntime: Babel not yet loaded, waiting...')
         // This effect will re-run when Babel loads
@@ -433,10 +435,16 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
       }
 
       try {
-        const isPlaceholder = /Preparing\s+interactive\s+lesson/i.test(code) || /module\.exports\s*=\s*Lesson\s*;\s*function\s*Lesson\({/.test(code);
-        if (isPlaceholder) {
-          // If placeholder, use a simple internal component
-          console.log('CodeSlideRuntime: Placeholder code detected, using internal fallback.')
+        // Try to compile AI-generated code; on failure, fallback to internal visuals
+        try {
+          console.log('CodeSlideRuntime: Compiling AI code...')
+          const compiled = await compileTsxCode(code)
+          setCompiledJs(compiled)
+          const Component = await executeCompiledCode(compiled)
+          setLessonComponent(() => Component) // Store the component function
+          onRenderComplete?.()
+        } catch (compileErr: any) {
+          console.warn('CodeSlideRuntime: Compilation failed, using internal fallback.', compileErr)
           const FallbackVisuals: React.FC<any> = ({ slide, timeSeconds, timeline }) => {
             const activeEvents = timeline.filter((t: any) => (t?.at ?? 0) <= timeSeconds).map((t: any) => t.event)
             const showIntro = activeEvents.includes('intro') || activeEvents.length === 0
@@ -464,14 +472,10 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
           setLessonComponent(() => FallbackVisuals) // Use a function to set state
           setCompiledJs(null) // No compiled JS for fallback
           onRenderComplete?.()
-        } else {
-          // Compile and execute actual AI-generated code
-          console.log('CodeSlideRuntime: Compiling AI code...')
-          const compiled = await compileTsxCode(code)
-          setCompiledJs(compiled)
-          const Component = await executeCompiledCode(compiled)
-          setLessonComponent(() => Component) // Store the component function
-          onRenderComplete?.()
+          const runtimeError: RuntimeError = { message: compileErr?.message || 'Compilation failed', stage: 'compile' }
+          setRenderError(runtimeError)
+          onError?.(compileErr)
+          reportError(runtimeError)
         }
       } catch (error: any) {
         console.error('CodeSlideRuntime: Error during initial code processing:', error)
@@ -490,7 +494,7 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
     }
 
     processCode()
-  }, [code, compileTsxCode, executeCompiledCode, onError, onRenderComplete, reportError])
+  }, [code, compileTsxCode, executeCompiledCode, onError, onRenderComplete, reportError, babelReady])
 
 
   // Effect to initialize React Root once and render the current LessonComponent
