@@ -441,6 +441,12 @@ export const apiService = {
         'Accept': 'text/plain; charset=utf-8',
       }
 
+      // Get auth token and add it to the request
+      const token = localStorage.getItem('workos_access_token') || localStorage.getItem('authToken')
+      if (token) {
+        request.auth_token = token
+      }
+
       const resp = await fetch(url, {
         method: 'POST',
         headers,

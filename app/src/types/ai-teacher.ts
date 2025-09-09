@@ -59,6 +59,7 @@ export interface StreamLessonRequest {
   preferred_voice?: string;
   language?: string;
   model?: string;
+  auth_token?: string;
 }
 
 export interface TeacherSession {

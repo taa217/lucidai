@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import asyncio
 import os
-from typing import AsyncGenerator, Optional, List
+from typing import AsyncGenerator, Optional, List, Dict, Any
 
+import httpx
 from .models import TeacherEvent, RenderPayload, SpeakPayload, StreamLessonRequest, SpeakSegment
 from .state import session_state
 from shared.llm_client import get_llm_client, LLMProvider
 from shared.voice_client import synthesize_cartesia_tts
+from shared.config import get_settings
 
 
 OPENAI_GPT5_MODEL = os.environ.get("OPENAI_TEACHER_MODEL", "gpt-5-2025-08-07")
@@ -25,6 +27,43 @@ class TeacherAgent:
     def __init__(self) -> None:
         self.llm = get_llm_client()
 
+    async def fetch_user_customizations(self, user_id: Optional[str] = None, auth_token: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        """Fetch user customizations from the main server API."""
+        if not user_id:
+            return None
+
+        settings = get_settings()
+        main_server_url = settings.main_server_url
+
+        try:
+            # Prepare headers
+            headers = {
+                "Content-Type": "application/json",
+            }
+
+            # Add authentication if token is provided
+            if auth_token:
+                headers["Authorization"] = f"Bearer {auth_token}"
+
+            # Make request to the main server API
+            async with httpx.AsyncClient(timeout=httpx.Timeout(5.0)) as client:
+                response = await client.get(
+                    f"{main_server_url}/api/users/customize",
+                    headers=headers
+                )
+
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get("success") and data.get("data"):
+                        return data["data"]
+                else:
+                    print(f"Failed to fetch user customizations: {response.status_code} - {response.text}")
+
+        except Exception as e:
+            print(f"Error fetching user customizations: {e}")
+
+        return None
+
     async def stream_lesson(self, req: StreamLessonRequest) -> AsyncGenerator[TeacherEvent, None]:
         # Prepare session
         session_id = req.session_id or f"teacher_{req.user_id or 'anon'}"
@@ -32,13 +71,38 @@ class TeacherAgent:
         state["topic"] = req.topic
         state["user_id"] = req.user_id
 
+        # Fetch user customizations for personalized teaching
+        user_customizations = await self.fetch_user_customizations(req.user_id, req.auth_token)
+
         # Announce session
         yield TeacherEvent(type="session", session_id=session_id, message="session started", seq=session_state.next_seq(session_id))
 
+        # Build personalized context for the user
+        user_context = ""
+        if user_customizations:
+            display_name = user_customizations.get("displayName", "Clyde")
+            occupation = user_customizations.get("occupation", "")
+            traits = user_customizations.get("traits", "")
+            extra_notes = user_customizations.get("extraNotes", "")
+            preferred_language = user_customizations.get("preferredLanguage", "English")
+
+            user_context = f"LEARNER PROFILE:\n"
+            user_context += f"- Name: {display_name}\n"
+            if occupation:
+                user_context += f"- Occupation: {occupation}\n"
+            if traits:
+                user_context += f"- Personality traits: {traits}\n"
+            if extra_notes:
+                user_context += f"- Additional context: {extra_notes}\n"
+            if preferred_language and preferred_language != "English":
+                user_context += f"- Preferred language: {preferred_language}\n"
+            user_context += "\n"
+
         # Build planning prompt
         system = (
-            "You are a master teacher. Develop and deliver a dynamic teaching segment that feels like a live, paced teaching video. "
-            "Return TWO sections only: narration and TSX code. The visuals MUST be React-friendly and sync to audio beats. "
+            f"You are a master teacher. Develop and deliver a dynamic teaching segment that feels like a live, paced teaching video. "
+            f"Return TWO sections only: narration and TSX code. The visuals MUST be React-friendly and sync to audio beats. "
+            f"{user_context}"
             "RUNTIME CONTRACT (STRICT):\n"
             "- Environment: React web runtime with Babel (no bundler).\n"
             "- Allowed elements ONLY: div, span, p, h1, h2, h3, img, button, svg, rect, circle, line, path, text.\n"
@@ -53,12 +117,17 @@ class TeacherAgent:
             "- Aim for 3–5 beats (intro + reveals). Each beat should add/change visuals (e.g., fade in title, highlight, simple diagram).\n"
             "- Keep under ~90 lines.\n"
             "- Use CSS transitions instead of complex animations to prevent render conflicts.\n"
-            "TONE: The learner is Clyde; keep it cool and encouraging."
+            f"TONE: Adapt your teaching style to {user_customizations.get('displayName', 'the learner') if user_customizations else 'the learner'}; keep it cool and encouraging."
         )
+        # Get learner's name for personalization
+        learner_name = "learner"
+        if user_customizations and user_customizations.get("displayName"):
+            learner_name = user_customizations["displayName"]
+
         user = (
             f"Topic: {req.topic}\n"
-            "Audience: motivated beginner.\n"
-            "Goal: explain the core idea with one concrete example and a simple visual layout.\n"
+            f"Audience: {learner_name}, a motivated beginner.\n"
+            f"Goal: explain the core idea with one concrete example and a simple visual layout.\n"
             "Constraints: 120-180 words narration; TSX under ~80 lines; no external fetches."
         )
 

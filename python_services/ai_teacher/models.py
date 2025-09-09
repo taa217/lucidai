@@ -82,6 +82,8 @@ class StreamLessonRequest(BaseModel):
     language: Optional[str] = None
     # Optional: allow model override; defaults to GPT-5
     model: Optional[str] = None
+    # Optional: authentication token for fetching user customizations
+    auth_token: Optional[str] = None
 
 
 class RenderErrorReport(BaseModel):

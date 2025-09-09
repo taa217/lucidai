@@ -145,6 +145,35 @@ cd app && npm i @babel/standalone --save
 - The runtime exposes lightweight SVG primitives so the AI can draw diagrams directly in TSX without Mermaid.
 - Prefer SVG for reliability and fine control; keep shapes simple and readable. Mermaid remains supported as a convenience.
 
+### 👤 User Customization Integration (Latest) - ✅ IMPLEMENTED
+- **What**: User preferences from "Customize Lucid" modal are now integrated into AI teacher prompts for personalized learning experiences
+- **Features**:
+  - **Personalized Prompts**: AI teacher receives user display name, occupation, traits, extra notes, and preferred language
+  - **Contextual Teaching**: AI adapts teaching style based on user's personality traits and background
+  - **Language Preferences**: AI respects user's preferred language setting in responses
+  - **Real-time Integration**: Customizations fetched from database and injected into system prompts during lesson streaming
+- **Implementation**:
+  - **Backend**: Python AI teacher service (`python_services/ai_teacher/agent.py`) fetches user customizations via HTTP request to main server API
+  - **Authentication**: Supports Bearer token authentication for secure access to user data
+  - **Prompt Engineering**: User profile information is integrated into system prompts with clear "LEARNER PROFILE" sections
+  - **Error Handling**: Graceful fallback when customizations are unavailable
+- **API Integration**:
+  - `POST /teacher/stream` now accepts optional `auth_token` parameter
+  - `GET /api/users/customize` endpoint provides user customization data
+  - Frontend automatically passes authentication tokens for seamless integration
+- **User Experience**:
+  - AI teacher addresses users by their chosen display name
+  - Teaching style adapts to user's specified traits and occupation
+  - Content language respects user's preferred language setting
+  - Personalized learning recommendations based on user's background
+- **Files Updated**:
+  - `python_services/ai_teacher/agent.py` - Added user customization fetching and prompt integration
+  - `python_services/ai_teacher/models.py` - Added auth_token field to StreamLessonRequest
+  - `app/src/services/api.ts` - Added auth token to teacher streaming requests
+  - `app/src/types/ai-teacher.ts` - Updated TypeScript interfaces
+  - `TEACHING_SLIDES_README.md` - Documentation added
+- **Status**: ✅ Complete integration with personalized AI teaching experiences
+
 ### 🧑‍🏫 AI Teacher Frontend Integration - ✅ COMPLETED & ENHANCED
 - **What**: Complete frontend integration for the AI Teacher module with interactive learning sessions
 - **Components Created**:
