@@ -199,6 +199,38 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
       }
     }
 
+    // Lightweight motion helpers exposed to generated components (no imports needed)
+    const motion = {
+      time: timeSeconds,
+      clamp: (x: number, min: number, max: number) => Math.max(min, Math.min(max, x)),
+      lerp: (a: number, b: number, t: number) => a + (b - a) * t,
+      easeInOut: (t: number) => {
+        // cubic ease in/out
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+      },
+      phaseProgress: (phase: number | string) => {
+        // Compute progress 0->1 between phase N and N+1 (or next event)
+        const events = ((timeline || []) as Array<{ at: number; event: string }>).
+          slice().
+          sort((a, b) => (a.at || 0) - (b.at || 0))
+        if (!events.length) return 0
+        const currentT = timeSeconds || 0
+        // Map string name to index (first match)
+        let idx = -1
+        if (typeof phase === 'number') {
+          idx = phase
+        } else {
+          idx = events.findIndex(e => (e.event || '').toLowerCase().includes(String(phase).toLowerCase()))
+        }
+        if (idx < 0) idx = 1 // 0 is intro, default to first reveal phase
+        const start = events[idx]?.at ?? events[0].at
+        const end = events[idx + 1]?.at ?? (start + 2)
+        if (currentT <= start) return 0
+        if (currentT >= end) return 1
+        return (currentT - start) / Math.max(0.0001, (end - start))
+      }
+    }
+
     // Mock React Native components for web (simplify to basic HTML elements)
     const View = ({ children, style, ...props }: any) => {
       const webStyle = style ? {
@@ -285,12 +317,14 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
       Svg, Path, Rect, Circle, Line, Polygon, SvgText,
       MermaidDiagram,
       utils,
+      motion,
       props: { // These are the props explicitly available to the generated component
         slide: { title: topic },
         showCaptions: true,
         isPlaying,
         timeSeconds,
         timeline,
+        motion,
         Svg, Path, Rect, Circle, Line, Polygon, SvgText // Also pass SVG components directly
       }
     }
@@ -471,9 +505,43 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
     // This effect ensures the root is always rendering SOMETHING
     // It will re-render whenever LessonComponent or componentProps changes
     if (LessonComponent) {
+      const CinematicBackground: React.FC<{ t: number }> = ({ t }) => {
+        const driftX = Math.sin((t || 0) * 0.15) * 20
+        const driftY = Math.cos((t || 0) * 0.13) * 16
+        const blobScale = 1 + Math.sin((t || 0) * 0.25) * 0.05
+        return (
+          <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 0 }}>
+            <div style={{
+              position: 'absolute', width: '140%', height: '140%', left: '-20%', top: '-20%',
+              background: 'radial-gradient(1200px 800px at 30% 20%, rgba(59,130,246,0.18), transparent 60%)',
+              transform: `translate(${driftX}px, ${driftY}px)`
+            }} />
+            <div style={{
+              position: 'absolute', width: 600, height: 600, borderRadius: 9999,
+              background: 'radial-gradient(circle at 50% 50%, rgba(99,102,241,0.18), transparent 60%)',
+              filter: 'blur(40px)',
+              left: '10%', top: '30%',
+              transform: `scale(${blobScale}) translateY(${driftY * 0.4}px)`
+            }} />
+            <div style={{
+              position: 'absolute', width: 500, height: 500, borderRadius: 9999,
+              background: 'radial-gradient(circle at 50% 50%, rgba(34,197,94,0.12), transparent 60%)',
+              filter: 'blur(50px)',
+              right: '0%', top: '10%',
+              transform: `scale(${1.02 + Math.sin((t || 0) * 0.2) * 0.03}) translateX(${driftX * 0.3}px)`
+            }} />
+          </div>
+        )
+      }
+
       reactRootRef.current.render(
         <DynamicComponentErrorBoundary onBoundaryError={handleDynamicComponentError}>
-          {React.createElement(LessonComponent, componentProps)}
+          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+            <CinematicBackground t={timeSeconds || 0} />
+            <div style={{ position: 'relative', zIndex: 2, width: '100%', height: '100%' }}>
+              {React.createElement(LessonComponent, componentProps)}
+            </div>
+          </div>
         </DynamicComponentErrorBoundary>
       );
     } else {
