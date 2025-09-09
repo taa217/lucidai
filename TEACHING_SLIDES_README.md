@@ -251,7 +251,7 @@ cd app && npm i @babel/standalone --save
   - `ai_teacher/models.py`, `ai_teacher/state.py`: Pydantic models and simple in-memory session store (upgrade to SQLite/Redis later). `SpeakPayload` supports `word_timestamps`.
 - Integration: Router is mounted into `slide_orchestrator/api_server.py` at `/teacher/*` for convenience.
 - Frontend expectation: An app runtime that can render TSX code blocks similar to `CodeSlideRuntime` and play `speak.audio_url` if present.
-- UI behavior update: The audio plays in the background with no visible audio bar. While visuals load and before audio is ready, the UI shows “Starting lesson…”. When playback ends, a “Replay lesson” button appears overlayed. During auto-fixes, audio is paused and an overlay shows “Repairing visuals…”.
+- UI behavior update: The audio plays in the background with no visible audio bar. While visuals load and before audio is ready, the UI shows "Starting lesson…". When playback ends, a "Replay lesson" button appears overlayed. During auto-fixes, audio is paused and an overlay shows "Repairing visuals…".
 
 #### 🔁 Auto-fix feedback loop for render errors — UPDATED (conversational)
 - Problem: Occasionally, code-driven slides throw runtime errors on web (e.g., `TypeError: Animated.useRef is not a function`).
@@ -279,7 +279,7 @@ cd app && npm i @babel/standalone --save
 - **Details**: Applies per‑layout strategies (`bullet_points`, `full_text`, `diagram`, `text_image`) and reflows stacked items with spacing heuristics.
 - **User Impact**: Clean slide composition; no text on top of text; visuals do not obscure content.
 
-### 🎨 Visuals “Zero-Plan” Guard + Minimal Fallback - ✅ ADDED
+### 🎨 Visuals "Zero-Plan" Guard + Minimal Fallback - ✅ ADDED
 ### 🧠 Lesson Memory + Teaching Persona + Playback Gating - ✅ ADDED
 ### 🎙️ Teacher‑style Narration (50–90 words) - ✅ UPDATED
 - Change: When LLM omits notes, we synthesize natural, teacher‑like `speaker_notes` from slide text/bullets (no generic placeholders).
@@ -382,7 +382,7 @@ cd app && npm i @babel/standalone --save
   - `CustomizeLucidModal` added under `app/src/components/CustomizeLucidModal.tsx`; opens from `SidebarFooter` and centers on screen.
   - `ChatInterface` already forwards `context`; backend enriches it, so no UI change needed.
  - **Ops**:
-   - Run migrations on the backend: `npm run typeorm:migration:run` (or your project’s migration command) before deploying.
+   - Run migrations on the backend: `npm run typeorm:migration:run` (or your project's migration command) before deploying.
 
 ### 📚 Library Page Implementation - ✅ COMPLETED
 - **What**: Created a comprehensive Library page that displays user documents with search functionality
@@ -517,7 +517,7 @@ cd app && npm i @babel/standalone --save
 - **User Impact**: Fast, progressive responses in reader chat; minimal latency to first token.
 - **Problem**: In reader chat, the frontend showed no answer because the Nest server timed out after 60s while the Python Q&A finished slightly later. Backend logged: "Request timeout after 60000ms" even though the Python service returned an answer.
 - **Solution**: Increased the server-to-Python request timeout to 120s. This prevents premature aborts and lets the frontend receive the response in read mode.
-- **Ingestion UX**: Frontend now treats ingest request timeouts as background success and shows “Document queued • indexing in background” instead of error. This matches Python service behavior where OpenAI file upload returns quickly and VDB indexing continues in background.
+- **Ingestion UX**: Frontend now treats ingest request timeouts as background success and shows "Document queued • indexing in background" instead of error. This matches Python service behavior where OpenAI file upload returns quickly and VDB indexing continues in background.
 - **Files Updated**: `server/src/services/ai-agent-client.service.ts` (default `REQUEST_TIMEOUT` → 120000ms)
 - **Files Updated** (UX): `app/services/api.ts` (timeout → background success for ingest), `app/app/read/[docId].tsx` (status chip messaging)
 - **Config**: You can override with env `REQUEST_TIMEOUT`.
@@ -622,7 +622,7 @@ cd app && npm i @babel/standalone --save
 
 ## Current Project Status
 
-Last reviewed: 2025-08-27
+Last reviewed: 2025-09-09
 
 ### ✅ **Completed Features**
 - **WorkOS AuthKit Integration**: Complete authentication system with database storage
@@ -883,6 +883,13 @@ cd app && npm start
 2. **Ports**: Verify services are running on correct ports
 3. **CORS**: Backend is configured for frontend communication
 4. **Health Checks**: Use status tab to monitor service health
+
+### AI Teacher streaming quick fixes (local dev)
+1) Ensure the Python orchestrator is running: `uvicorn slide_orchestrator.api_server:app --host 0.0.0.0 --port 8003`.
+2) In `app/.env` set `REACT_APP_ORCHESTRATOR_URL=http://localhost:8003` and restart the web app.
+3) The web fetch for `POST /teacher/stream` uses `Accept: text/plain`, `mode: cors`, and `cache: no-store` to keep the NDJSON stream alive.
+4) If visuals show only the placeholder while audio works, wait for Babel to load—`CodeSlideRuntime` now retries compilation after Babel is ready and falls back gracefully when compile fails.
+5) If audio URLs are relative (e.g., `/storage/generated_audio/...`), the app resolves them to the orchestrator origin automatically.
 
 ## Development Notes
 
