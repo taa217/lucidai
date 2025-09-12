@@ -30,6 +30,9 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
   // No more isRepairing state here, CodeSlideRuntime manages internal error display/reporting
   
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const currentAudioUrlRef = useRef<string | null>(null)
+  const lastPlayRequestAtRef = useRef<number>(0)
+  const playTokenRef = useRef<number>(0)
   const timeIntervalRef = useRef<NodeJS.Timeout | undefined>(undefined)
   const streamAbortRef = useRef<AbortController | undefined>(undefined)
 
@@ -134,13 +137,16 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
 
             const resolvedUrl = resolveAudioUrl(event.speak.audio_url)
             updated.audioUrl = resolvedUrl
-            if (event.speak.audio_url) {
-              // Start audio playback
-              setTimeout(() => {
-                if (resolvedUrl) {
+            if (resolvedUrl && resolvedUrl !== currentAudioUrlRef.current) {
+              // Debounce rapid duplicate play requests
+              const now = Date.now()
+              if (now - lastPlayRequestAtRef.current > 250) {
+                lastPlayRequestAtRef.current = now
+                // Slight delay to allow URL to become publicly readable when just written to disk
+                setTimeout(() => {
                   playAudio(resolvedUrl)
-                }
-              }, 100)
+                }, 120)
+              }
             }
           }
           break
@@ -163,58 +169,66 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
 
   // Audio playback controls
   const playAudio = useCallback((audioUrl: string) => {
+    // If same URL and already attached, just ensure it's playing
+    if (currentAudioUrlRef.current === audioUrl && audioRef.current) {
+      audioRef.current.play().catch((err) => {
+        if (String(err?.name) !== 'AbortError') {
+          console.error('Failed to resume audio:', err)
+        }
+      })
+      return
+    }
+
+    const token = ++playTokenRef.current
+
+    // Stop previous audio safely
     if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.currentTime = 0
+      try { audioRef.current.pause() } catch {}
+      try { audioRef.current.currentTime = 0 } catch {}
     }
 
     const audio = new Audio(audioUrl)
-    try {
-      ;(audio as any).playsInline = true
-    } catch {}
+    try { (audio as any).playsInline = true } catch {}
     audio.preload = 'auto'
     audio.autoplay = true
     audioRef.current = audio
-
-    audio.addEventListener('loadstart', () => {
-      setIsPlaying(true)
-    })
+    currentAudioUrlRef.current = audioUrl
 
     audio.addEventListener('play', () => {
+      if (playTokenRef.current !== token) return
       setIsPlaying(true)
       startTimeTracking()
     })
 
     audio.addEventListener('pause', () => {
+      if (playTokenRef.current !== token) return
       setIsPlaying(false)
       stopTimeTracking()
     })
 
     audio.addEventListener('ended', () => {
+      if (playTokenRef.current !== token) return
       setIsPlaying(false)
       setShowReplay(true)
       stopTimeTracking()
     })
 
     audio.addEventListener('error', (e) => {
+      if (playTokenRef.current !== token) return
       console.error('Audio playback error:', e)
       setIsPlaying(false)
       stopTimeTracking()
-      
-      // Try to recover from audio errors
-      setTimeout(() => {
-        if (session?.audioUrl) {
-          console.log('Retrying audio playback after error')
-          playAudio(session.audioUrl)
-        }
-      }, 2000)
     })
 
     audio.play().catch(err => {
+      if (String(err?.name) === 'AbortError') {
+        // Benign: play was interrupted by a quick pause/switch
+        return
+      }
       console.error('Failed to play audio:', err)
       setIsPlaying(false)
     })
-  }, [])
+  }, [startTimeTracking, stopTimeTracking])
 
   const startTimeTracking = useCallback(() => {
     stopTimeTracking()

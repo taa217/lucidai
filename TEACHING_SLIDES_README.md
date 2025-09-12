@@ -157,7 +157,9 @@ cd app && npm i @babel/standalone --save
   - Favor transform-based motion for smoothness; minimal reliance on CSS transitions.
 - Frontend changes:
   - `CodeSlideRuntime` wraps visuals with an always-moving cinematic background (blurred radial blobs + gentle drift) synced to audio time.
-  - `AITeacherSession` increases audio time polling to 100ms for smoother animation updates.
+  - If AI TSX fails to compile or throws at runtime, the runtime now swaps to a built-in cinematic fallback visual immediately, and a 2s watchdog ensures no blank state even if Babel loads slowly.
+  - Motion helpers (`motion.time`, `phaseProgress`, etc.) are now backed by live refs, so visuals update fluidly with audio time without triggering recompilation.
+  - `AITeacherSession` increases audio time polling to 100ms for smoother animation updates and sequences audio play/pause to avoid AbortError.
 - Backend changes:
   - `python_services/ai_teacher/agent.py` prompt updated to encourage continuous, time-driven motion using the helpers (no imports/hooks required).
 
@@ -888,8 +890,9 @@ cd app && npm start
 1) Ensure the Python orchestrator is running: `uvicorn slide_orchestrator.api_server:app --host 0.0.0.0 --port 8003`.
 2) In `app/.env` set `REACT_APP_ORCHESTRATOR_URL=http://localhost:8003` and restart the web app.
 3) The web fetch for `POST /teacher/stream` uses `Accept: text/plain`, `mode: cors`, and `cache: no-store` to keep the NDJSON stream alive.
-4) If visuals show only the placeholder while audio works, wait for Babel to load—`CodeSlideRuntime` now retries compilation after Babel is ready and falls back gracefully when compile fails.
-5) If audio URLs are relative (e.g., `/storage/generated_audio/...`), the app resolves them to the orchestrator origin automatically.
+4) If visuals fail to appear: the runtime auto-falls back to cinematic visuals after ~2s if Babel isn't ready or code compilation fails; once Babel loads, fresh code will be compiled on the next update.
+5) Audio unlock: browsers often require a user gesture to start audio. Click anywhere in the lesson area or press play. The player now deduplicates rapid play requests to avoid AbortError.
+6) If audio URLs are relative (e.g., `/storage/generated_audio/...`), the app resolves them to the orchestrator origin automatically.
 
 ## Development Notes
 

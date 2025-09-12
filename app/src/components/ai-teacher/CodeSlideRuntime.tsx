@@ -111,6 +111,17 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
   const lastReportTimeRef = useRef<number>(0)
   const isInitializedRef = useRef<boolean>(false)
 
+  // Live refs for props that change frequently
+  const timeSecondsRef = useRef<number>(timeSeconds || 0)
+  const timelineRef = useRef<Array<{ at: number; event: string }>>(timeline || [])
+  const topicRef = useRef<string | undefined>(topic)
+  const isPlayingRef = useRef<boolean>(isPlaying || false)
+
+  useEffect(() => { timeSecondsRef.current = timeSeconds || 0 }, [timeSeconds])
+  useEffect(() => { timelineRef.current = (timeline || []) as Array<{ at: number; event: string }> }, [timeline])
+  useEffect(() => { topicRef.current = topic }, [topic])
+  useEffect(() => { isPlayingRef.current = !!isPlaying }, [isPlaying])
+
   // Memoized props for the LessonComponent
   const componentProps = useMemo(() => ({
     slide: { title: topic },
@@ -201,35 +212,32 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
     }
 
     // Lightweight motion helpers exposed to generated components (no imports needed)
-    const motion = {
-      time: timeSeconds,
-      clamp: (x: number, min: number, max: number) => Math.max(min, Math.min(max, x)),
-      lerp: (a: number, b: number, t: number) => a + (b - a) * t,
-      easeInOut: (t: number) => {
-        // cubic ease in/out
-        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
-      },
-      phaseProgress: (phase: number | string) => {
-        // Compute progress 0->1 between phase N and N+1 (or next event)
-        const events = ((timeline || []) as Array<{ at: number; event: string }>).
-          slice().
-          sort((a, b) => (a.at || 0) - (b.at || 0))
-        if (!events.length) return 0
-        const currentT = timeSeconds || 0
-        // Map string name to index (first match)
-        let idx = -1
-        if (typeof phase === 'number') {
-          idx = phase
-        } else {
-          idx = events.findIndex(e => (e.event || '').toLowerCase().includes(String(phase).toLowerCase()))
-        }
-        if (idx < 0) idx = 1 // 0 is intro, default to first reveal phase
-        const start = events[idx]?.at ?? events[0].at
-        const end = events[idx + 1]?.at ?? (start + 2)
-        if (currentT <= start) return 0
-        if (currentT >= end) return 1
-        return (currentT - start) / Math.max(0.0001, (end - start))
+    // Motion helpers read live refs to remain dynamic without re-compiling
+    const motion: any = {}
+    Object.defineProperty(motion, 'time', {
+      get() { return timeSecondsRef.current || 0 },
+    })
+    motion.clamp = (x: number, min: number, max: number) => Math.max(min, Math.min(max, x))
+    motion.lerp = (a: number, b: number, t: number) => a + (b - a) * t
+    motion.easeInOut = (t: number) => {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+    }
+    motion.phaseProgress = (phase: number | string) => {
+      const events = (timelineRef.current || []).slice().sort((a, b) => (a.at || 0) - (b.at || 0))
+      if (!events.length) return 0
+      const currentT = timeSecondsRef.current || 0
+      let idx = -1
+      if (typeof phase === 'number') {
+        idx = phase
+      } else {
+        idx = events.findIndex(e => (e.event || '').toLowerCase().includes(String(phase).toLowerCase()))
       }
+      if (idx < 0) idx = 1
+      const start = events[idx]?.at ?? events[0].at
+      const end = events[idx + 1]?.at ?? (start + 2)
+      if (currentT <= start) return 0
+      if (currentT >= end) return 1
+      return (currentT - start) / Math.max(0.0001, (end - start))
     }
 
     // Mock React Native components for web (simplify to basic HTML elements)
@@ -320,16 +328,16 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
       utils,
       motion,
       props: { // These are the props explicitly available to the generated component
-        slide: { title: topic },
+        slide: { title: topicRef.current },
         showCaptions: true,
-        isPlaying,
-        timeSeconds,
-        timeline,
+        isPlaying: isPlayingRef.current,
+        timeSeconds: timeSecondsRef.current,
+        timeline: timelineRef.current,
         motion,
-        Svg, Path, Rect, Circle, Line, Polygon, SvgText // Also pass SVG components directly
+        Svg, Path, Rect, Circle, Line, Polygon, SvgText
       }
     }
-  }, [topic, isPlaying, timeSeconds, timeline]) // Dependencies for memoization
+  }, []) // Stable; uses live refs for dynamics
 
   // Execute compiled code safely and return the React component
   const executeCompiledCode = useCallback(async (compiledJsCode: string): Promise<React.ComponentType<any>> => {
@@ -384,6 +392,36 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
       throw new Error(`Execution environment setup failed: ${error.message || String(error)}`)
     }
   }, [createRuntimeEnvironment])
+
+  // A lightweight cinematic fallback component (stable reference)
+  const FallbackVisuals = useMemo(() => {
+    const C: React.FC<any> = ({ slide, timeSeconds, timeline }) => {
+      const activeEvents = (timeline || []).filter((t: any) => (t?.at ?? 0) <= (timeSeconds || 0)).map((t: any) => t.event)
+      const showIntro = activeEvents.includes('intro') || activeEvents.length === 0
+      const showBeat2 = activeEvents.some((e: any) => (e || '').includes('reveal:1') || (e || '').includes('reveal:main'))
+      const showBeat3 = activeEvents.some((e: any) => (e || '').includes('reveal:2'))
+      const showBeat4 = activeEvents.some((e: any) => (e || '').includes('reveal:3'))
+      const t = timeSeconds || 0
+      const driftX = Math.sin(t * 0.6) * 6
+      const driftY = Math.cos(t * 0.5) * 5
+      return (
+        <div style={{ padding: '24px', backgroundColor: '#0f172a', color: '#e2e8f0', minHeight: '400px', fontFamily: 'Inter, system-ui, Arial', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <h1 style={{ fontSize: 28, fontWeight: 800, color: '#60a5fa', marginBottom: 16, transform: `translate(${driftX}px, ${driftY * 0.2}px)`, opacity: showIntro ? 1 : 0.9, transition: 'opacity 0.4s linear' }}>{slide?.title || 'Lesson Topic'}</h1>
+          {showIntro && <p style={{ opacity: 0.95, transition: 'opacity 0.5s ease' }}>Starting the lesson...</p>}
+          <div style={{ marginTop: 24, width: '90%', maxWidth: '640px' }}>
+            <svg width="100%" height="220" viewBox="0 0 800 220" style={{ display: 'block' }}>
+              <rect x="0" y="0" width="800" height="220" rx="10" fill="#0b1220" stroke="#1f2a44" />
+              <circle cx={120 + driftX} cy={110 + driftY} r="42" fill={showBeat2 ? '#22c55e' : '#475569'} style={{ transition: 'fill 0.4s ease' }} />
+              <rect x="200" y="72" width={showBeat3 ? 480 : 200} height="28" rx="8" fill="#334155" style={{ transition: 'width 0.5s ease' }} />
+              <rect x="200" y="112" width={showBeat4 ? 400 : 160} height="24" rx="8" fill="#1f2a44" style={{ transition: 'width 0.5s ease' }} />
+              <text x="200" y="60" fill="#94a3b8" fontSize="14">Core idea</text>
+            </svg>
+          </div>
+        </div>
+      )
+    }
+    return C
+  }, [])
 
   // Effect to manage Babel loading
   useEffect(() => {
@@ -445,31 +483,7 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
           onRenderComplete?.()
         } catch (compileErr: any) {
           console.warn('CodeSlideRuntime: Compilation failed, using internal fallback.', compileErr)
-          const FallbackVisuals: React.FC<any> = ({ slide, timeSeconds, timeline }) => {
-            const activeEvents = timeline.filter((t: any) => (t?.at ?? 0) <= timeSeconds).map((t: any) => t.event)
-            const showIntro = activeEvents.includes('intro') || activeEvents.length === 0
-            const showBeat2 = activeEvents.some((e: any) => e.includes('reveal:1') || e.includes('reveal:main'))
-            const showBeat3 = activeEvents.some((e: any) => e.includes('reveal:2'))
-            const showBeat4 = activeEvents.some((e: any) => e.includes('reveal:3'))
-            return (
-              <div style={{ padding: '24px', backgroundColor: '#0f172a', color: '#e2e8f0', minHeight: '400px', fontFamily: 'Inter, system-ui, Arial', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <h1 style={{ fontSize: 28, fontWeight: 700, color: '#60a5fa', marginBottom: 16, opacity: showIntro ? 1 : 0.5, transition: 'opacity 0.5s ease' }}>{slide?.title || 'Lesson Topic'}</h1>
-                {showIntro && <p style={{ opacity: 0.95, transition: 'opacity 0.5s ease' }}>Starting the lesson...</p>}
-                <div style={{ marginTop: 24, width: '90%', maxWidth: '600px' }}>
-                  <svg width="100%" height="220" viewBox="0 0 800 220" style={{ display: 'block' }}>
-                    <rect x="0" y="0" width="800" height="220" rx="10" fill="#1e293b" stroke="#334155" strokeWidth="2" />
-                    <circle cx="120" cy="110" r="45" fill={showBeat2 ? '#22c55e' : '#475569'} style={{ transition: 'fill 0.5s ease' }} />
-                    <rect x="200" y="70" width={showBeat3 ? 480 : 200} height="30" rx="8" fill="#475569" style={{ transition: 'width 0.5s ease' }} />
-                    <rect x="200" y="115" width={showBeat4 ? 400 : 160} height="25" rx="8" fill="#334155" style={{ transition: 'width 0.5s ease' }} />
-                    <rect x="200" y="150" width={showBeat4 ? 300 : 120} height="20" rx="8" fill="#334155" style={{ transition: 'width 0.5s ease' }} />
-                    <text x="120" y="115" fontSize="20" textAnchor="middle" fill="#f8fafc">{showBeat2 ? '✅' : '...'}</text>
-                    <text x="210" y="90" fontSize="16" fill="#f8fafc" style={{ opacity: showBeat3 ? 1 : 0.6, transition: 'opacity 0.5s ease' }}>{showBeat3 ? 'Core Concept' : 'Loading...'}</text>
-                  </svg>
-                </div>
-              </div>
-            )
-          }
-          setLessonComponent(() => FallbackVisuals) // Use a function to set state
+          setLessonComponent(() => FallbackVisuals)
           setCompiledJs(null) // No compiled JS for fallback
           onRenderComplete?.()
           const runtimeError: RuntimeError = { message: compileErr?.message || 'Compilation failed', stage: 'compile' }
@@ -494,7 +508,28 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
     }
 
     processCode()
-  }, [code, compileTsxCode, executeCompiledCode, onError, onRenderComplete, reportError, babelReady])
+  }, [code, babelReady])
+
+  // Watchdog: if compilation takes too long or Babel is slow, show cinematic fallback immediately
+  useEffect(() => {
+    if (!code) return
+    let cancelled = false
+    const timeout = setTimeout(() => {
+      if (cancelled) return
+      // If no component is ready yet, present fallback to avoid a blank/looping state
+      if (!LessonComponent) {
+        setLessonComponent(() => FallbackVisuals)
+      }
+    }, 2000)
+    return () => { cancelled = true; clearTimeout(timeout) }
+  }, [code, LessonComponent, FallbackVisuals])
+
+  // On runtime/render errors, immediately swap to fallback visuals instead of error box
+  useEffect(() => {
+    if (renderError && !isFixing) {
+      setLessonComponent(() => FallbackVisuals)
+    }
+  }, [renderError, isFixing, FallbackVisuals])
 
 
   // Effect to initialize React Root once and render the current LessonComponent
@@ -576,35 +611,7 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
   }, []); // Empty dependency array means this runs only on unmount
 
 
-  if (renderError && !isFixing) {
-    return (
-      <div style={{ 
-        padding: '20px', 
-        backgroundColor: '#fee', 
-        border: '1px solid #fcc',
-        borderRadius: '8px',
-        color: '#c33',
-        minHeight: '400px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        textAlign: 'center'
-      }}>
-        <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>
-          Render Error ({renderError.stage})
-        </div>
-        <div style={{ fontSize: '14px', fontFamily: 'monospace', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
-          {renderError.message}
-        </div>
-        {isFixing && (
-          <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
-            Attempting to fix...
-          </div>
-        )}
-      </div>
-    )
-  }
+  // Always render the container; errors trigger cinematic fallback via LessonComponent
 
   // The actual render output of CodeSlideRuntime itself is just the container
   return (
