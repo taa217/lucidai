@@ -167,7 +167,30 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
     })
   }, [topic, userId])
 
-  // Audio playback controls
+  
+
+  const startTimeTracking = useCallback(() => {
+    stopTimeTracking()
+    timeIntervalRef.current = setInterval(() => {
+      if (audioRef.current) {
+        const newTime = audioRef.current.currentTime
+        // Only update if time has changed significantly to prevent excessive re-renders
+        setTimeSeconds(prevTime => {
+          const diff = Math.abs(newTime - prevTime)
+          return diff > 0.1 ? newTime : prevTime
+        })
+      }
+    }, 100) // Increased update frequency for smoother motion
+  }, [])
+
+  const stopTimeTracking = useCallback(() => {
+    if (timeIntervalRef.current) {
+      clearInterval(timeIntervalRef.current)
+      timeIntervalRef.current = undefined
+    }
+  }, [])
+
+  // Audio playback controls (moved below time tracking callbacks to avoid TS2448)
   const playAudio = useCallback((audioUrl: string) => {
     // If same URL and already attached, just ensure it's playing
     if (currentAudioUrlRef.current === audioUrl && audioRef.current) {
@@ -229,27 +252,6 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
       setIsPlaying(false)
     })
   }, [startTimeTracking, stopTimeTracking])
-
-  const startTimeTracking = useCallback(() => {
-    stopTimeTracking()
-    timeIntervalRef.current = setInterval(() => {
-      if (audioRef.current) {
-        const newTime = audioRef.current.currentTime
-        // Only update if time has changed significantly to prevent excessive re-renders
-        setTimeSeconds(prevTime => {
-          const diff = Math.abs(newTime - prevTime)
-          return diff > 0.1 ? newTime : prevTime
-        })
-      }
-    }, 100) // Increased update frequency for smoother motion
-  }, [])
-
-  const stopTimeTracking = useCallback(() => {
-    if (timeIntervalRef.current) {
-      clearInterval(timeIntervalRef.current)
-      timeIntervalRef.current = undefined
-    }
-  }, [])
 
   const togglePlayPause = useCallback(() => {
     if (!audioRef.current) return

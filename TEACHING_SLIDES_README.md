@@ -661,9 +661,10 @@ Last reviewed: 2025-09-09
 - Web (Vercel):
   - App root: `app/`
   - Build Command: `npm ci && npm run build`
-  - Output: `dist/`
+  - Output: `build/` (Create React App)
   - Env on Vercel: set `EXPO_PUBLIC_API_HOST=<your-backend-domain>` and WorkOS `EXPO_PUBLIC_*`
   - `app/vercel.json` includes a rewrite to proxy `/api/*` to your backend; replace `YOUR_BACKEND_DOMAIN`.
+  - Note on TS builds: Ensure callbacks used in hook deps are declared before use. A recent fix moved `startTimeTracking`/`stopTimeTracking` above `playAudio` in `app/src/components/ai-teacher/AITeacherSession.tsx` to resolve `TS2448: Block-scoped variable used before its declaration` during Vercel builds.
 
 - Backend (Render):
   - Root: `server/`
