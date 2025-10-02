@@ -3,16 +3,22 @@ from __future__ import annotations
 import asyncio
 import os
 from typing import AsyncGenerator, Optional, List, Dict, Any
-
 import httpx
+
 from .models import TeacherEvent, RenderPayload, SpeakPayload, StreamLessonRequest, SpeakSegment
 from .state import session_state
 from shared.llm_client import get_llm_client, LLMProvider
 from shared.voice_client import synthesize_cartesia_tts
 from shared.config import get_settings
+from .tsx_utils import extract_tag as tsx_extract_tag, extract_code_block as tsx_extract_code_block, normalize_tsx as tsx_normalize
+from .timeline_utils import build_segments_from_word_timestamps, build_segments_naive
+from .user_prefs import fetch_user_customizations as fetch_prefs
+from .tsx_utils import extract_tag as tsx_extract_tag, extract_code_block as tsx_extract_code_block, normalize_tsx as tsx_normalize
+from .timeline_utils import build_segments_from_word_timestamps, build_segments_naive
+from .user_prefs import fetch_user_customizations as fetch_prefs
 
 
-OPENAI_GPT5_MODEL = os.environ.get("OPENAI_TEACHER_MODEL", "gpt-5-2025-08-07")
+OPENAI_GPT5_MODEL = os.environ.get("OPENAI_TEACHER_MODEL", "gpt-5-codex")
 
 
 class TeacherAgent:
@@ -65,6 +71,10 @@ class TeacherAgent:
         return None
 
     async def stream_lesson(self, req: StreamLessonRequest) -> AsyncGenerator[TeacherEvent, None]:
+        try:
+            print(f"[TeacherAgent] stream_lesson start topic='{req.topic}' user='{req.user_id}' session='{req.session_id}' tts={req.tts}")
+        except Exception:
+            pass
         # Prepare session
         session_id = req.session_id or f"teacher_{req.user_id or 'anon'}"
         state = session_state.ensure(session_id)
@@ -73,6 +83,10 @@ class TeacherAgent:
 
         # Fetch user customizations for personalized teaching
         user_customizations = await self.fetch_user_customizations(req.user_id, req.auth_token)
+        try:
+            print(f"[TeacherAgent] fetched customizations ok={bool(user_customizations)}")
+        except Exception:
+            pass
 
         # Announce session
         yield TeacherEvent(type="session", session_id=session_id, message="session started", seq=session_state.next_seq(session_id))
@@ -182,6 +196,10 @@ class TeacherAgent:
         messages.append({"role": "user", "content": prompt})
 
         # Generate using OpenAI only (no fallback) and GPT‑5 by default
+        try:
+            print("[TeacherAgent] calling LLM for narration+code…")
+        except Exception:
+            pass
         text, _provider = await self.llm.generate_response(
             messages=[type("Msg", (), {"role": type("Role", (), {"value": m["role"]}), "content": m["content"]}) for m in messages],
             preferred_provider=LLMProvider.OPENAI,
@@ -190,9 +208,15 @@ class TeacherAgent:
             max_tokens=2048,
             temperature=0.7,
         )
+        try:
+            preview = (text or "").strip()[:200].replace("\n", " ")
+            print(f"[TeacherAgent] LLM response preview: {preview}…")
+        except Exception:
+            pass
 
-        narration = self._extract_tag(text, "narration") or text.strip()[:220]
-        code = self._extract_code_block(text) or (
+        narration = tsx_extract_tag(text, "narration") or text.strip()[:220]
+        extracted = tsx_extract_code_block(text)
+        code = (extracted if extracted else (
             "function Lesson({ slide, showCaptions, isPlaying, timeSeconds, timeline }) {\n"
             "  // Stable computation to prevent re-render issues\n"
             "  const timelineArray = timeline || [];\n"
@@ -219,7 +243,29 @@ class TeacherAgent:
             "  );\n"
             "}\n\n"
             "module.exports = Lesson;"
-        )
+        ))
+
+        # Normalize TSX for bundler-free execution
+        try:
+            before_len = len(code or "")
+            code = tsx_normalize(code)
+            after_len = len(code or "")
+            head = (code or "")[:140].replace("\n", " ")
+            print(f"[TeacherAgent] normalized TSX len {before_len}→{after_len} head='{head}'")
+        except Exception as e:
+            print(f"[TeacherAgent] normalize TSX failed: {e}")
+
+        # Contract enforcement: if code seems non-compliant or empty, replace with a safe cinematic baseline
+        try:
+            non_empty = bool(code and isinstance(code, str) and len(code.strip()) > 40)
+            has_module_exports = ("module.exports" in (code or ""))
+            looks_like_component = ("function " in (code or "") and "return (" in (code or ""))
+            if not (non_empty and has_module_exports and looks_like_component):
+                from .fixer import generate_safe_cinematic_tsx
+                print("[TeacherAgent] code non-compliant → using safe cinematic TSX")
+                code = generate_safe_cinematic_tsx(title=f"Lesson: {req.topic}")
+        except Exception as _e:
+            pass
 
         # Persist last outputs for auto-fix context
         try:
@@ -233,6 +279,10 @@ class TeacherAgent:
 
         # Emit render first so UI can show content while TTS processes
         # Use a basic timeline that will be updated after TTS processing
+        try:
+            print("[TeacherAgent] emit render (initial) + minimal timeline")
+        except Exception:
+            pass
         yield TeacherEvent(
             type="render",
             session_id=session_id,
@@ -266,57 +316,32 @@ class TeacherAgent:
                 speak_payload.model = result_full.get("model")
                 speak_payload.voice = result_full.get("voice")
                 speak_payload.word_timestamps = result_full.get("word_timestamps")
+                try:
+                    print(f"[TeacherAgent] TTS ok url={speak_payload.audio_url} dur={speak_payload.duration_seconds}s words={len(speak_payload.word_timestamps or [])}")
+                except Exception:
+                    pass
 
                 segments: List[SpeakSegment] = []
-                timeline_events = []
+                timeline_events: List[Dict[str, Any]] = []
                 if speak_payload.word_timestamps:
-                    words = speak_payload.word_timestamps
-                    # Aim for ~4 beats for better visual progression
-                    num_beats = 4 if len(words) >= 28 else (3 if len(words) >= 14 else 2)
-                    per = max(1, round(len(words) / num_beats))
-                    idx = 0
-                    beat_no = 1
-                    while idx < len(words):
-                        chunk = words[idx:idx+per]
-                        text_chunk = " ".join([w.get("word", "") for w in chunk]).strip()
-                        start = float(chunk[0].get("start", 0.0))
-                        end = float(chunk[-1].get("end", start))
-                        seg = SpeakSegment(text=text_chunk, start_at=round(start, 2), duration_seconds=round(max(0.2, end - start), 2))
-                        segments.append(seg)
-                        # Use more descriptive event names for better visual coordination
-                        if beat_no == 1:
-                            timeline_events.append({"at": round(start, 2), "event": "reveal:main"})
-                        else:
-                            timeline_events.append({"at": round(start, 2), "event": f"reveal:{beat_no}"})
-                        beat_no += 1
-                        idx += per
+                    segs, evs = build_segments_from_word_timestamps(narration, speak_payload.word_timestamps or [])
                 else:
-                    # Fallback to naive sentence beats with better timing
                     total_duration = speak_payload.duration_seconds or max(8.0, len(narration.split()) * 0.62)
-                    import re
-                    raw = [s.strip() for s in re.split(r"(?<=[\.!?])\s+", narration) if s.strip()]
-                    if not raw:
-                        raw = [narration]
-                    if len(raw) > 5:
-                        target = 4
-                        per2 = max(1, round(len(raw) / target))
-                        beats = [" ".join(raw[i:i+per2]) for i in range(0, len(raw), per2)]
-                    else:
-                        beats = raw
-                    beat_dur = max(1.5, total_duration / max(1, len(beats)))
-                    t = 0.0
-                    for i, segment_text in enumerate(beats, start=1):
-                        seg = SpeakSegment(text=segment_text, start_at=round(t, 2), duration_seconds=round(beat_dur, 2))
-                        segments.append(seg)
-                        # Use more descriptive event names
-                        if i == 1:
-                            timeline_events.append({"at": round(t, 2), "event": "reveal:main"})
-                        else:
-                            timeline_events.append({"at": round(t, 2), "event": f"reveal:{i}"})
-                        t += beat_dur
+                    segs, evs = build_segments_naive(narration, float(total_duration))
+                for s in segs:
+                    segments.append(SpeakSegment(text=s.get("text", ""), start_at=float(s.get("start_at", 0.0)), duration_seconds=float(s.get("duration_seconds", 0.0))))
+                timeline_events = evs
 
                 speak_payload.segments = segments
+                try:
+                    print(f"[TeacherAgent] computed {len(segments)} segments, updating timeline events={len(timeline_events)}")
+                except Exception:
+                    pass
                 # Emit an updated render with precise timeline aligned to voice
+                try:
+                    print("[TeacherAgent] emit render (updated timeline)")
+                except Exception:
+                    pass
                 yield TeacherEvent(
                     type="render",
                     session_id=session_id,
@@ -330,9 +355,13 @@ class TeacherAgent:
                         timeline=[{"at": 0, "event": "intro"}] + timeline_events,
                     ),
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[TeacherAgent] TTS failed: {e}")
 
+        try:
+            print("[TeacherAgent] emit speak + final")
+        except Exception:
+            pass
         yield TeacherEvent(
             type="speak",
             session_id=session_id,
@@ -351,15 +380,106 @@ class TeacherAgent:
 
     @staticmethod
     def _extract_code_block(text: str) -> Optional[str]:
+        """Extract TSX/JSX code from a variety of fencing styles.
+
+        Handles:
+          - ```tsx ... ``` (with optional trailing language metadata)
+          - ```jsx ... ```
+          - ``` ... ``` (no language)
+          - ~~~tsx ... ~~~ (rare)
+          - Unfenced responses that start with function/component definitions
+        """
         import re
-        # Support CRLF newlines and optional language in fences
-        m = re.search(r"```(?:tsx|jsx)?\r?\n([\s\S]*?)\r?\n```", text, flags=re.IGNORECASE)
+
+        cleaned = text.strip()
+
+        # 1) Triple backticks with optional language and metadata
+        m = re.search(r"```\s*(?:tsx|jsx)?[^\n]*\r?\n([\s\S]*?)\r?\n```", cleaned, flags=re.IGNORECASE)
         if m:
             return m.group(1).strip()
-        # If the whole text is just a fenced block, strip fences
-        m2 = re.match(r"^```[a-zA-Z]*\r?\n([\s\S]*?)\r?\n```\s*$", text.strip(), flags=re.IGNORECASE)
+
+        # 2) Any fenced code block without language
+        m2 = re.search(r"```\s*\r?\n([\s\S]*?)\r?\n```", cleaned, flags=re.IGNORECASE)
         if m2:
             return m2.group(1).strip()
+
+        # 3) Tilde fences
+        m3 = re.search(r"~~~\s*(?:tsx|jsx)?[^\n]*\r?\n([\s\S]*?)\r?\n~~~", cleaned, flags=re.IGNORECASE)
+        if m3:
+            return m3.group(1).strip()
+
+        # 4) Heuristic: grab from first function/const component declaration
+        heuristic = re.search(
+            r"(function\s+[A-Za-z_][A-Za-z0-9_]*\s*\([\s\S]*?\)\s*\{[\s\S]*?\}\s*;?\s*(?:module\.exports\s*=|export\s+default|$))",
+            cleaned,
+            flags=re.IGNORECASE,
+        )
+        if heuristic:
+            return heuristic.group(1).strip()
+
         return None
+
+    @staticmethod
+    def _normalize_tsx(raw_code: str) -> str:
+        """Normalize model TSX into a bundler-free CommonJS snippet.
+
+        - Strips import/export lines
+        - Converts `export default function Name` → `function Name` + `module.exports = Name;`
+        - Ensures `module.exports` points to a plausible component (Lesson/App/Component)
+        """
+        import re
+
+        code = raw_code.strip()
+
+        # Remove BOM or stray backticks
+        code = code.replace("\ufeff", "").strip('`')
+
+        # Strip import lines (single line imports only)
+        code = re.sub(r"^\s*import\s+[^\n]*\n", "", code, flags=re.MULTILINE)
+
+        # Replace `export default function Name` with `function Name`
+        code = re.sub(r"^\s*export\s+default\s+function\s+", "function ", code, flags=re.IGNORECASE | re.MULTILINE)
+
+        # Replace bare `export default <Identifier>` with just `<Identifier>` on its own line
+        code = re.sub(r"^\s*export\s+default\s+([A-Za-z_][A-Za-z0-9_]*)\s*;?\s*$", r"\1", code, flags=re.IGNORECASE | re.MULTILINE)
+
+        # Replace `export default (` anonymous component with a named const
+        if re.search(r"^\s*export\s+default\s*\(", code, flags=re.IGNORECASE | re.MULTILINE):
+            code = re.sub(r"^\s*export\s+default\s*\(", "const Lesson = (", code, flags=re.IGNORECASE | re.MULTILINE)
+
+        # Remove any remaining `export` keywords that might appear on consts
+        code = re.sub(r"^\s*export\s+", "", code, flags=re.IGNORECASE | re.MULTILINE)
+
+        # Ensure we have a component name to export
+        component_name = None
+        for pattern in [
+            r"function\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(",
+            r"const\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\(",
+            r"let\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\(",
+        ]:
+            m = re.search(pattern, code)
+            if m:
+                component_name = m.group(1)
+                break
+
+        if not component_name:
+            # Fallback to a conventional name and wrap if necessary
+            component_name = "Lesson"
+            if "return (" not in code:
+                # Build a minimal safe component without f-strings to avoid brace interpolation issues
+                prefix = (
+                    "function " + component_name + "(\n" +
+                    "  { slide, showCaptions, isPlaying, timeSeconds, timeline }\n" +
+                    ") {\n" +
+                    "  return (<div>Rendering error: invalid component</div>);\n" +
+                    "}\n"
+                )
+                code = prefix + code
+
+        # Append module.exports assignment if missing
+        if not re.search(r"module\.exports\s*=", code):
+            code = code.rstrip() + f"\n\nmodule.exports = {component_name};\n"
+
+        return code
 
 

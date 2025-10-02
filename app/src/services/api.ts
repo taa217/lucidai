@@ -432,8 +432,9 @@ export const apiService = {
     onEvent: (evt: TeacherEvent) => void;
     onError?: (error: Error) => void;
     onDone?: () => void;
+    signal?: AbortSignal;
   }): Promise<void> {
-    const { request, onEvent, onError, onDone } = params
+    const { request, onEvent, onError, onDone, signal } = params
     try {
       const url = `${process.env.REACT_APP_ORCHESTRATOR_URL || 'http://localhost:8003'}/teacher/stream`
       const headers: Record<string, string> = {
@@ -447,6 +448,7 @@ export const apiService = {
         request.auth_token = token
       }
 
+      try { console.log('apiService.streamTeacherLesson: starting', { url, to: (process.env.REACT_APP_ORCHESTRATOR_URL || 'http://localhost:8003') }) } catch {}
       const resp = await fetch(url, {
         method: 'POST',
         headers,
@@ -455,6 +457,7 @@ export const apiService = {
         cache: 'no-store',
         credentials: 'omit',
         keepalive: false,
+        signal,
         body: JSON.stringify(request),
       })
       if (!resp.ok || !resp.body) {
@@ -463,6 +466,7 @@ export const apiService = {
       }
 
       const reader = (resp.body as any).getReader?.()
+      try { console.log('apiService.streamTeacherLesson: response opened', { ok: resp.ok, hasReader: !!reader }) } catch {}
       if (!reader) {
         const text = await resp.text()
         try {
@@ -490,9 +494,11 @@ export const apiService = {
           if (!trimmed) continue
           try {
             const evt = JSON.parse(trimmed) as TeacherEvent
+            try { console.log('apiService.streamTeacherLesson: event', { type: (evt as any)?.type, seq: (evt as any)?.seq }) } catch {}
             onEvent(evt)
           } catch (e) {
             // Fallback: treat as error
+            try { console.warn('apiService.streamTeacherLesson: non-JSON line', trimmed.slice(0, 160)) } catch {}
             onEvent({ type: 'error', message: trimmed })
           }
         }
@@ -504,27 +510,39 @@ export const apiService = {
           onEvent({ type: 'error', message: buffer.trim() })
         }
       }
+      try { console.log('apiService.streamTeacherLesson: done') } catch {}
       onEvent({ type: 'done' })
       onDone?.()
     } catch (err: any) {
+      if (err?.name === 'AbortError') {
+        try { console.log('apiService.streamTeacherLesson: aborted by signal') } catch {}
+        // Treat as benign; don't surface as error
+        onDone?.()
+        return
+      }
+      try { console.error('apiService.streamTeacherLesson: error', err) } catch {}
       onError?.(err)
       throw err
     }
   },
 
-  // Report render errors for auto-fix
-  async reportTeacherRenderError(report: RenderErrorReport): Promise<ApiResponse<any>> {
+  // Report render errors for auto-fix (Python teacher service)
+  async reportTeacherRenderError(report: RenderErrorReport): Promise<ApiResponse<{ fixedCode?: string }>> {
     try {
-      const response = await api.post('/agents/teacher/render-error', report)
-      return {
-        success: true,
-        data: response.data
+      const base = process.env.REACT_APP_ORCHESTRATOR_URL || 'http://localhost:8003'
+      const resp = await fetch(`${base.replace(/\/$/, '')}/teacher/render-error`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(report),
+      })
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => '')
+        return { success: false, error: `HTTP ${resp.status}: ${text}` }
       }
+      const data = await resp.json().catch(() => ({}))
+      return { success: true, data: { fixedCode: data?.fixedCode } }
     } catch (error: any) {
-      return {
-        success: false,
-        error: error.response?.data?.message || error.message,
-      }
+      return { success: false, error: error.message || 'report failed' }
     }
   },
 

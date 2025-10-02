@@ -65,6 +65,11 @@ cd app && npm i @babel/standalone --save
 
 ## Recent Updates (Latest)
 
+### 🖼️ Lesson visuals fill available space — FIXED (Latest)
+- Problem: The AI-generated lesson visuals did not occupy the full container height, leaving unused gray space at the bottom.
+- Fix: `app/src/components/ai-teacher/AITeacherSession.tsx` main content area now uses `absolute inset-0` so the runtime fills its parent. `app/src/components/ai-teacher/CodeSlideRuntime.tsx` container and internal wrappers now use `position: 'absolute', inset: 0` with `minHeight: 500px`.
+- Impact: Visuals now cover the entire session card; cinematic background and overlays render correctly without gaps.
+
 ### 🔧 API base URL normalization — FIXED
 - Ensured the web app always calls server routes with the `/api` prefix.
 - Change: normalized `app/src/services/api.ts` baseURL to append `/api` if missing.
@@ -162,6 +167,14 @@ cd app && npm i @babel/standalone --save
   - `AITeacherSession` increases audio time polling to 100ms for smoother animation updates and sequences audio play/pause to avoid AbortError.
 - Backend changes:
   - `python_services/ai_teacher/agent.py` prompt updated to encourage continuous, time-driven motion using the helpers (no imports/hooks required).
+  - New: The agent now robustly extracts TSX from model outputs and normalizes it to a bundler-free CommonJS module (strips `import`/`export`, ensures `module.exports = <Component>`). This eliminates silent fallbacks when the model returns `export default` or extra markdown wrappers.
+
+### 🛠️ Interactive Runtime Babel Config — FIXED (Latest)
+- Problem: Web runtime frequently fell back to the placeholder visual. Console showed Babel loading, compile started, but executed visuals rarely appeared.
+- Root cause: Babel was using the React automatic runtime and ESM output, which led to references to `react/jsx-runtime` and `export default` semantics the sandbox didn't execute.
+- Fix: `CodeSlideRuntime` now compiles TSX with presets `[ ['env', { modules: 'commonjs' }], ['react', { runtime: 'classic' }], ['typescript', { isTSX: true, allExtensions: true }] ]` and `sourceType: 'script'`.
+- Impact: Compiled code is CommonJS and uses classic `React.createElement`, so our sandbox can reliably `module.exports = Lesson` and execute without imports. This drastically reduces fallback visuals and makes lessons render smoothly once Babel loads.
+
 
 ### 👤 User Customization Integration (Latest) - ✅ IMPLEMENTED
 - **What**: User preferences from "Customize Lucid" modal are now integrated into AI teacher prompts for personalized learning experiences
@@ -231,11 +244,29 @@ cd app && npm i @babel/standalone --save
   - **Enhanced Error Boundary**: Integrated error boundary within dynamic component rendering
   - **Improved Timeline Generation**: Agent now generates consistent timeline events with descriptive names
 - **Files Updated**:
-  - `app/src/components/ai-teacher/CodeSlideRuntime.tsx` - Complete refactor with stable root management
-  - `app/src/components/ai-teacher/AITeacherSession.tsx` - Simplified to work with improved CodeSlideRuntime
+  - `app/src/components/ai-teacher/CodeSlideRuntime.tsx` - Refactored to use modular subcomponents/hooks
+  - `app/src/components/ai-teacher/runtime/*` - New: `DynamicComponentErrorBoundary`, `FallbackVisuals`, `CinematicBackground`, `useBabel`, `compileTsx`, `createRuntimeEnv`, `executeCompiledCode`
+  - `app/src/components/ai-teacher/AITeacherSession.tsx` - Uses `useAudioPlayer` and `useTeacherStream` hooks
+  - `app/src/components/ai-teacher/hooks/*` - New hooks: `useAudioPlayer`, `useTeacherStream`
   - `python_services/ai_teacher/agent.py` - Enhanced timeline generation with better event naming
 - **User Impact**: Smooth YouTube-like interactive experience with stable visuals and synchronized audio
 - **Status**: ✅ Interactive mode now provides seamless, error-free learning experience
+
+### 🧩 Research Mode Refactor — ✅ COMPLETED (Latest)
+### 🛠️ AI Teacher Backend Refactor — ✅ COMPLETED (Latest)
+- **What**: Split large `ai_teacher/agent.py` into focused modules.
+- **Files Added**:
+  - `python_services/ai_teacher/tsx_utils.py` — code extraction and normalization helpers
+  - `python_services/ai_teacher/timeline_utils.py` — segmentation and timeline-beat builders
+  - `python_services/ai_teacher/user_prefs.py` — user customization fetch
+- **Files Updated**:
+  - `python_services/ai_teacher/agent.py` — now imports helpers; logic simplified
+- **Impact**: Clear separation of concerns, easier testing and maintenance.
+- **What**: Extracted research UI and streaming logic from `LearningInterface` into a dedicated, reusable `ResearchPanel` component.
+- **Files**:
+  - `app/src/components/research/ResearchPanel.tsx` - New, self-contained research experience with Answer/Sources tabs and streaming
+  - `app/src/pages/LearningInterface.tsx` - Simplified; delegates to `ResearchPanel` when mode is 'research'
+- **Impact**: Frontend codebase is easier to navigate and debug; interactive mode and research mode are isolated modules.
 
 ### 🧑‍🏫 New AI Teacher Module (agentic runtime-first) - ADDED
 - What: A new backend module `python_services/ai_teacher` that streams a live teaching session as typed events the frontend can render like a YouTube-style lesson.
@@ -556,11 +587,16 @@ cd app && npm i @babel/standalone --save
   - Frontend: `app/components/learning/InitialPrompt.tsx`, `app/app/learning/slides.tsx`, `app/services/api.ts`
 - **User Impact**: Teaching begins faster; deck builds live. Lead agent remains in control of phase routing and task creation. Mem0-backed memory is available via `python_services/shared/memory.py` for agents to store and recall session context when integrated.
 
-### 🔧 OpenAI 400 Error Fix (Latest) - ✅ FIXED
-- **Problem**: OpenAI calls returned `400 Bad Request` when using an incompatible default model with the Chat Completions API.
-- **Solution**: Set the default OpenAI model in `python_services/shared/config.py` to `gpt-4o`, which is compatible with the Chat Completions endpoint used in `shared/llm_client.py`. The client already falls back to the Responses API when needed.
-- **Files Updated**: `python_services/shared/config.py` (default `OPENAI_MODEL` → `gpt-4o`)
-- **Notes**: You can still override with env `OPENAI_MODEL`.
+### 🔧 OpenAI 400 Error Fix (Latest) — ✅ FIXED
+- **Problem**: OpenAI Responses API returned `400 Bad Request` for GPT‑5 models when `text.verbosity` was set to "low" (unsupported for `gpt-5-codex`).
+- **Solution**: Updated all Responses API calls to use `text: { verbosity: 'medium' }` for GPT‑5/Responses‑first models. This resolves the `unsupported_value` error and keeps reasoning as `reasoning: { effort: 'low' }`.
+- **Files Updated**: `python_services/shared/llm_client.py`, `python_services/qna_agent_service/main.py`.
+- **Notes**: Model selection still prefers GPT‑5 for teacher and reader flows; no change required to environment variables.
+
+### 🧩 AI Teacher customizations fetch — ✅ FIXED
+- **Problem**: `name 'httpx' is not defined` when fetching user customizations in the Teacher Agent.
+- **Solution**: Added missing `httpx` import in `python_services/ai_teacher/agent.py`.
+- **Impact**: Personalized prompts now work reliably when `auth_token` is provided.
 
 ### 🔁 QnA Provider Fallback Disabled for ChatInterface (Latest) - ✅ UPDATED
 - **Change**: Removed cross-provider fallback in QnA for reader chat requests. The service now uses a single provider (defaults to OpenAI) and surfaces errors immediately.
@@ -624,7 +660,7 @@ cd app && npm i @babel/standalone --save
 
 ## Current Project Status
 
-Last reviewed: 2025-09-09
+Last reviewed: 2025-10-02
 
 ### ✅ **Completed Features**
 - **WorkOS AuthKit Integration**: Complete authentication system with database storage
@@ -894,6 +930,67 @@ cd app && npm start
 4) If visuals fail to appear: the runtime auto-falls back to cinematic visuals after ~2s if Babel isn't ready or code compilation fails; once Babel loads, fresh code will be compiled on the next update.
 5) Audio unlock: browsers often require a user gesture to start audio. Click anywhere in the lesson area or press play. The player now deduplicates rapid play requests to avoid AbortError.
 6) If audio URLs are relative (e.g., `/storage/generated_audio/...`), the app resolves them to the orchestrator origin automatically.
+
+### Interactive mode: end-to-end debug tracing (NEW)
+
+When a user enters a topic in interactive mode, this is what happens now, with logs you can watch:
+
+1) UI action (LearningInterface)
+   - User selects "Interactive" and submits a topic. `LearningInterface` renders `AITeacherSession` with that topic.
+
+2) Start session stream (frontend)
+   - `AITeacherSession` mounts and immediately calls `apiService.streamTeacherLesson`.
+   - Logs:
+     - `AITeacherSession:startStreaming` → shows `{ topic, userId, sessionId, tts, language }`.
+     - `apiService.streamTeacherLesson: starting` → shows orchestrator URL.
+     - `apiService.streamTeacherLesson: response opened` → confirms stream open.
+
+3) Receive streamed events (frontend)
+   - The Python service streams NDJSON events: `start` → `session` → `render` → (optional updated `render`) → `speak` → `final` → `done`.
+   - Logs as they arrive:
+     - `apiService.streamTeacherLesson: event` → `{ type, seq }` per line.
+     - `AITeacherSession:onEvent` → summarises `render` (codeLen, timelineLen) and `speak` (hasAudio, duration, segments).
+
+4) Render code path (frontend)
+   - `AITeacherSession` sets `session.renderCode` from `event.render.code` and passes it to `CodeSlideRuntime` with timeline/timeSeconds.
+   - `CodeSlideRuntime` loads Babel if needed, compiles TSX to CommonJS, executes in a sandbox, and mounts the returned component.
+   - Logs:
+     - `CodeSlideRuntime: Babel loaded successfully.` or `Babel not yet loaded, waiting…`.
+     - `CodeSlideRuntime: Incoming code changed` with length.
+     - `CodeSlideRuntime: compileTsxCode → input preview/compiled length`.
+     - `CodeSlideRuntime: executeCompiledCode → compiled preview/got component`.
+     - On errors: `Compilation failed, using internal fallback` and the first line preview; runtime errors are caught by the boundary.
+
+5) Fallback and auto-fix (frontend/backend)
+   - If compile/runtime fails, `CodeSlideRuntime` switches to cinematic fallback (watchdog in ~2s before first render) and reports the error to `/teacher/render-error`.
+   - Logs:
+     - `CodeSlideRuntime: Reporting render error` with codeLen and message; response logged too.
+     - Backend: `[TeacherAPI] /teacher/render-error` prints payload summary and `[result fixed=true|false]`.
+     - If fixedCode is returned, runtime logs `Received fixed code` and attempts a second-chance compile.
+
+6) Audio sync + time updates (frontend)
+   - On `speak`, `AITeacherSession` will autoplay audio, updating `timeSeconds` every 100ms.
+   - Logs:
+     - `AITeacherSession:playAudio`, then audio lifecycle: `audio:play`, `audio:pause`, `audio:ended`.
+     - `AITeacherSession:onDone` when streaming finishes.
+
+7) Backend generation (Python)
+   - `[TeacherAgent] stream_lesson start …` with topic/user.
+   - Fetches personalization: `[TeacherAgent] fetched customizations ok=true|false`.
+   - LLM call: `[TeacherAgent] calling LLM …` and response preview.
+   - TSX normalization: `[TeacherAgent] normalized TSX len A→B` with head preview.
+   - Emits events: `[TeacherAgent] emit render (initial)` → optional updated render after TTS → `emit speak + final`.
+   - TTS status: `[TeacherAgent] TTS ok url=… dur=…s words=…` or `[TeacherAgent] TTS failed: …`.
+   - Router logs each emitted event: `[TeacherAPI] emit event type=… seq=…`.
+
+Where to look
+- Frontend console: browser devtools (filter for `AITeacherSession`, `CodeSlideRuntime`, `apiService.streamTeacherLesson`).
+- Python logs: terminal running `uvicorn slide_orchestrator.api_server:app`.
+
+Common reasons visuals fall back
+- Babel not loaded yet (watchdog shows fallback briefly). It compiles once Babel loads.
+- TSX includes ESM or `export default`—the normalization on the Python side tries to fix this; the runtime compiles with CommonJS/classic React.
+- Runtime errors in the AI code—error boundary triggers auto-fix; watch for a subsequent `Received fixed code`.
 
 ## Development Notes
 

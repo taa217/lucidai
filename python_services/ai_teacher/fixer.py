@@ -163,3 +163,44 @@ async def attempt_llm_fix(
         return code
 
 
+
+def generate_safe_cinematic_tsx(title: Optional[str] = None) -> str:
+    """Return a deterministic, contract-compliant TSX component that always works on the web runtime.
+
+    Only uses allowed tags and motion helpers; no imports/exports beyond module.exports.
+    """
+    safe_title = (title or "Lesson").replace("`", "'")
+    return (
+        "function Lesson({ slide, showCaptions, isPlaying, timeSeconds, timeline }) {\n"
+        "  const t = (typeof motion !== 'undefined' && motion.time != null) ? motion.time : (timeSeconds || 0);\n"
+        "  const ease = (x) => (typeof motion !== 'undefined' && motion.easeInOut ? motion.easeInOut(x) : x);\n"
+        "  const p1 = (typeof motion !== 'undefined' && motion.phaseProgress) ? motion.phaseProgress(1) : 0;\n"
+        "  const p2 = (typeof motion !== 'undefined' && motion.phaseProgress) ? motion.phaseProgress(2) : 0;\n"
+        "  const driftX = Math.sin(t * 0.25) * 20;\n"
+        "  const driftY = Math.cos(t * 0.22) * 16;\n"
+        "  const blobScale = 1 + Math.sin(t * 0.35) * 0.06;\n"
+        "  const bar1 = 160 + (typeof motion !== 'undefined' ? motion.lerp(0, 260, ease(p1)) : 260 * ease(p1));\n"
+        "  const bar2 = 140 + (typeof motion !== 'undefined' ? motion.lerp(0, 220, ease(p2)) : 220 * ease(p2));\n"
+        "  return (\n"
+        "    <div style={{ position: 'relative', padding: '24px', backgroundColor: '#0f172a', color: '#e2e8f0', minHeight: '400px', fontFamily: 'Inter, Arial, sans-serif' }}>\n"
+        f"      <h1 style={{ fontSize: 28, fontWeight: 800, color: '#60a5fa', marginBottom: 12, transform: `translate(${ '{' }driftX{'}' }px, ${ '{' }driftY * 0.2{'}' }px)`, transition: 'transform 0.2s linear' }}>{'{'}slide?.title || '{safe_title}'{'}'}</h1>\n"
+        "      <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 0 }}>\n"
+        "        <div style={{ position: 'absolute', width: '140%', height: '140%', left: '-20%', top: '-20%', background: 'radial-gradient(1200px 800px at 30% 20%, rgba(59,130,246,0.18), transparent 60%)', transform: `translate(${ '{' }driftX{'}' }px, ${ '{' }driftY{'}' }px)` }} />\n"
+        "        <div style={{ position: 'absolute', width: 600, height: 600, borderRadius: 9999, background: 'radial-gradient(circle at 50% 50%, rgba(99,102,241,0.18), transparent 60%)', filter: 'blur(40px)', left: '10%', top: '30%', transform: `scale(${ '{' }blobScale{'}' }) translateY(${ '{' }driftY * 0.4{'}' }px)` }} />\n"
+        "        <div style={{ position: 'absolute', width: 500, height: 500, borderRadius: 9999, background: 'radial-gradient(circle at 50% 50%, rgba(34,197,94,0.12), transparent 60%)', filter: 'blur(50px)', right: '0%', top: '10%', transform: `scale(${ '{' }1.02 + Math.sin(t * 0.2) * 0.03{'}' }) translateX(${ '{' }driftX * 0.3{'}' }px)` }} />\n"
+        "      </div>\n"
+        "      <div style={{ position: 'relative', zIndex: 2, marginTop: 24, width: '100%', maxWidth: 820 }}>\n"
+        "        <svg width='100%' height='220' viewBox='0 0 800 220' style={{ display: 'block' }}>\n"
+        "          <rect x='0' y='0' width='800' height='220' rx='10' fill='#0b1220' stroke='#1f2a44' />\n"
+        "          <circle cx={120 + Math.sin(t * 0.6) * 10} cy={110 + Math.cos(t * 0.52) * 8} r='42' fill='#22c55e' opacity={0.9} />\n"
+        "          <rect x='200' y='72' width={bar1} height='28' rx='8' fill='#334155' />\n"
+        "          <rect x='200' y='112' width={bar2} height='24' rx='8' fill='#1f2a44' />\n"
+        "          <text x='200' y='60' fill='#94a3b8' fontSize='14'>Core idea</text>\n"
+        "        </svg>\n"
+        "      </div>\n"
+        "    </div>\n"
+        "  );\n"
+        "}\n\n"
+        "module.exports = Lesson;\n"
+    )
+

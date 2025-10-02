@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Play, Pause, RotateCcw, Volume2, VolumeX } from 'lucide-react'
-import { apiService } from '../../services/api'
 import { CodeSlideRuntime } from './CodeSlideRuntime'
-import { TeacherEvent, TeacherSession, StreamLessonRequest } from '../../types'
+import { TeacherEvent, TeacherSession } from '../../types'
+import { useAudioPlayer } from './hooks/useAudioPlayer'
+import { useTeacherStream } from './hooks/useTeacherStream'
 
 // Removed the old ErrorBoundary class as CodeSlideRuntime now includes its own
 // The onError prop in AITeacherSession will still receive errors from CodeSlideRuntime
@@ -22,70 +23,35 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
   onError
 }) => {
   const [session, setSession] = useState<TeacherSession | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [timeSeconds, setTimeSeconds] = useState(0)
-  const [showReplay, setShowReplay] = useState(false)
+  // Audio + time tracking
+  const { isPlaying, timeSeconds, showReplay, requestPlay, togglePlayPause, replay, cleanup } = useAudioPlayer()
+  // Stream control
+  const { isLoading, startStreaming, abort } = useTeacherStream({
+    topic,
+    userId,
+    onEvent: (event: TeacherEvent) => handleTeacherEvent(event),
+    onError: (err: Error) => {
+      console.error('AITeacherSession: Stream error:', err)
+      setError(err.message)
+      onError?.(err)
+    },
+    onDone: () => {
+      try { console.log('AITeacherSession:onDone') } catch {}
+      setSession(prev => prev ? { ...prev, status: 'completed' } : null)
+    },
+  })
   // No more isRepairing state here, CodeSlideRuntime manages internal error display/reporting
-  
-  const audioRef = useRef<HTMLAudioElement | null>(null)
   const currentAudioUrlRef = useRef<string | null>(null)
-  const lastPlayRequestAtRef = useRef<number>(0)
-  const playTokenRef = useRef<number>(0)
-  const timeIntervalRef = useRef<NodeJS.Timeout | undefined>(undefined)
-  const streamAbortRef = useRef<AbortController | undefined>(undefined)
+  const didStartRef = useRef<boolean>(false)
+  const prevTopicRef = useRef<string | undefined>(undefined)
 
-  // Start streaming lesson directly
-  const startStreaming = useCallback(async () => {
-    setIsLoading(true)
+  // Start streaming lesson directly (wrap to clear error and reset local state)
+  const startStreamingWrapped = useCallback(() => {
     setError(null)
-    setTimeSeconds(0) // Reset time when starting a new stream
-    setShowReplay(false) // Hide replay UI
-
-    try {
-      const request: StreamLessonRequest = {
-        topic,
-        user_id: userId,
-        session_id: `teacher_${userId || 'anon'}_${Date.now()}`,
-        tts: true,
-        language: 'en'
-      }
-
-      // Abort any existing stream before starting a new one
-      if (streamAbortRef.current) {
-        streamAbortRef.current.abort()
-      }
-      streamAbortRef.current = new AbortController()
-
-      await apiService.streamTeacherLesson({
-        request,
-        onEvent: (event: TeacherEvent) => {
-          handleTeacherEvent(event)
-        },
-        onError: (err: Error) => {
-          console.error("AITeacherSession: Stream error:", err)
-          setError(err.message)
-          onError?.(err)
-        },
-        onDone: () => {
-          setIsLoading(false)
-          setSession(prev => prev ? { ...prev, status: 'completed' } : null)
-          // Don't show replay here - let audio 'ended' event handle it
-          stopTimeTracking() // Ensure time tracking stops
-        }
-      })
-    } catch (err: any) {
-      if (err.name === 'AbortError') {
-        console.log("AITeacherSession: Stream aborted successfully.")
-      } else {
-        console.error("AITeacherSession: Failed to start streaming lesson:", err)
-        setError(err.message)
-        onError?.(err)
-      }
-      setIsLoading(false)
-    }
-  }, [topic, userId, onError, error]) // Add error to dependencies to avoid showing replay on error
+    currentAudioUrlRef.current = null
+    startStreaming()
+  }, [startStreaming])
 
   // Handle teacher events
   const handleTeacherEvent = useCallback((event: TeacherEvent) => {
@@ -138,15 +104,8 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
             const resolvedUrl = resolveAudioUrl(event.speak.audio_url)
             updated.audioUrl = resolvedUrl
             if (resolvedUrl && resolvedUrl !== currentAudioUrlRef.current) {
-              // Debounce rapid duplicate play requests
-              const now = Date.now()
-              if (now - lastPlayRequestAtRef.current > 250) {
-                lastPlayRequestAtRef.current = now
-                // Slight delay to allow URL to become publicly readable when just written to disk
-                setTimeout(() => {
-                  playAudio(resolvedUrl)
-                }, 120)
-              }
+              currentAudioUrlRef.current = resolvedUrl
+              requestPlay(resolvedUrl)
             }
           }
           break
@@ -167,114 +126,7 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
     })
   }, [topic, userId])
 
-  
-
-  const startTimeTracking = useCallback(() => {
-    stopTimeTracking()
-    timeIntervalRef.current = setInterval(() => {
-      if (audioRef.current) {
-        const newTime = audioRef.current.currentTime
-        // Only update if time has changed significantly to prevent excessive re-renders
-        setTimeSeconds(prevTime => {
-          const diff = Math.abs(newTime - prevTime)
-          return diff > 0.1 ? newTime : prevTime
-        })
-      }
-    }, 100) // Increased update frequency for smoother motion
-  }, [])
-
-  const stopTimeTracking = useCallback(() => {
-    if (timeIntervalRef.current) {
-      clearInterval(timeIntervalRef.current)
-      timeIntervalRef.current = undefined
-    }
-  }, [])
-
-  // Audio playback controls (moved below time tracking callbacks to avoid TS2448)
-  const playAudio = useCallback((audioUrl: string) => {
-    // If same URL and already attached, just ensure it's playing
-    if (currentAudioUrlRef.current === audioUrl && audioRef.current) {
-      audioRef.current.play().catch((err) => {
-        if (String(err?.name) !== 'AbortError') {
-          console.error('Failed to resume audio:', err)
-        }
-      })
-      return
-    }
-
-    const token = ++playTokenRef.current
-
-    // Stop previous audio safely
-    if (audioRef.current) {
-      try { audioRef.current.pause() } catch {}
-      try { audioRef.current.currentTime = 0 } catch {}
-    }
-
-    const audio = new Audio(audioUrl)
-    try { (audio as any).playsInline = true } catch {}
-    audio.preload = 'auto'
-    audio.autoplay = true
-    audioRef.current = audio
-    currentAudioUrlRef.current = audioUrl
-
-    audio.addEventListener('play', () => {
-      if (playTokenRef.current !== token) return
-      setIsPlaying(true)
-      startTimeTracking()
-    })
-
-    audio.addEventListener('pause', () => {
-      if (playTokenRef.current !== token) return
-      setIsPlaying(false)
-      stopTimeTracking()
-    })
-
-    audio.addEventListener('ended', () => {
-      if (playTokenRef.current !== token) return
-      setIsPlaying(false)
-      setShowReplay(true)
-      stopTimeTracking()
-    })
-
-    audio.addEventListener('error', (e) => {
-      if (playTokenRef.current !== token) return
-      console.error('Audio playback error:', e)
-      setIsPlaying(false)
-      stopTimeTracking()
-    })
-
-    audio.play().catch(err => {
-      if (String(err?.name) === 'AbortError') {
-        // Benign: play was interrupted by a quick pause/switch
-        return
-      }
-      console.error('Failed to play audio:', err)
-      setIsPlaying(false)
-    })
-  }, [startTimeTracking, stopTimeTracking])
-
-  const togglePlayPause = useCallback(() => {
-    if (!audioRef.current) return
-
-    if (isPlaying) {
-      audioRef.current.pause()
-    } else {
-      audioRef.current.play().catch(err => {
-        console.error('Failed to resume audio:', err)
-      })
-    }
-  }, [isPlaying])
-
-  const replayLesson = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0
-      audioRef.current.play().catch(err => {
-        console.error('Failed to replay audio:', err)
-      })
-    }
-    setShowReplay(false)
-    setTimeSeconds(0)
-  }, [])
+  const replayLesson = useCallback(() => { replay() }, [replay])
 
   // Handle render errors from CodeSlideRuntime
   const handleRenderError = useCallback((error: Error) => {
@@ -287,32 +139,37 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
     }
   }, [session, startStreaming])
 
-  // Start streaming on mount
+  // Start streaming on mount (guard StrictMode double invoke)
   useEffect(() => {
-    startStreaming()
-  }, [startStreaming])
+    try { console.log('AITeacherSession:mount') } catch {}
+    if (!didStartRef.current) {
+      didStartRef.current = true
+      startStreamingWrapped()
+    }
+  }, [startStreamingWrapped])
 
-  // Reset session state when topic changes
+  // Reset session state only when topic actually changes (skip initial mount)
   useEffect(() => {
-    setSession(null)
-    setError(null)
-    setIsPlaying(false)
-    setTimeSeconds(0)
-    setShowReplay(false)
-  }, [topic])
+    const prev = prevTopicRef.current
+    prevTopicRef.current = topic
+    if (prev !== undefined && prev !== topic) {
+      try { console.log('AITeacherSession:topicChanged', { from: prev, to: topic }) } catch {}
+      setSession(null)
+      setError(null)
+      abort()
+      Promise.resolve().then(() => startStreamingWrapped())
+    }
+  }, [topic, startStreamingWrapped, abort])
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause()
-      }
-      stopTimeTracking()
-      if (streamAbortRef.current) {
-        streamAbortRef.current.abort()
-      }
+      try { console.log('AITeacherSession:unmount') } catch {}
+      cleanup()
+      abort()
+      didStartRef.current = false
     }
-  }, [stopTimeTracking])
+  }, [cleanup, abort])
 
   if (isLoading && !session) {
     return (
@@ -352,7 +209,7 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
   return (
     <div className="relative w-full h-full min-h-[500px] bg-gray-50 rounded-lg overflow-hidden">
       {/* Main content area */}
-      <div className="relative w-full h-full">
+      <div className="absolute inset-0">
         {session.renderCode ? (
           <CodeSlideRuntime
             code={session.renderCode}

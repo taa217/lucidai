@@ -1,7 +1,14 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react'
-import { createRoot, Root } from 'react-dom/client' // Import Root type
+import { createRoot, Root } from 'react-dom/client'
 import { apiService } from '../../services/api'
 import { RenderErrorReport } from '../../types'
+import DynamicComponentErrorBoundary from './runtime/DynamicComponentErrorBoundary'
+import { useBabelReady } from './runtime/useBabel'
+import { compileTsxCode } from './runtime/compileTsx'
+import { createRuntimeEnvironment } from './runtime/createRuntimeEnv'
+import { executeCompiledCode as execCompiled } from './runtime/executeCompiledCode'
+import CinematicBackground from './runtime/CinematicBackground'
+import FallbackVisuals from './runtime/FallbackVisuals'
 
 // Import Babel standalone for TSX compilation
 declare global {
@@ -29,60 +36,6 @@ interface RuntimeError {
   stage: 'compile' | 'render' | 'runtime'
 }
 
-// Error Boundary for the dynamically rendered component
-class DynamicComponentErrorBoundary extends React.Component<
-  { children: React.ReactNode; onBoundaryError: (error: Error) => void },
-  { hasError: boolean; error: Error | null }
-> {
-  constructor(props: any) {
-    super(props)
-    this.state = { hasError: false, error: null }
-  }
-
-  static getDerivedStateFromError(error: Error) {
-    // Update state so the next render will show the fallback UI.
-    return { hasError: true, error }
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("CodeSlideRuntime: Error Boundary caught an error in dynamic component:", error, errorInfo)
-    this.props.onBoundaryError(error)
-  }
-
-  render() {
-    if (this.state.hasError) {
-      // You can render any custom fallback UI
-      return (
-        <div style={{
-          padding: '20px',
-          backgroundColor: '#fee2e2',
-          border: '1px solid #fca5a5',
-          borderRadius: '8px',
-          color: '#dc2626',
-          fontFamily: 'monospace',
-          fontSize: '14px',
-          minHeight: '400px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-          <div style={{ fontWeight: 'bold', marginBottom: '10px' }}>Component Error:</div>
-          <div style={{ wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>
-            {this.state.error?.message || 'Unknown error occurred in component.'}
-            <div style={{ marginTop: '10px', fontSize: '12px', color: '#888' }}>
-              Please refresh or wait for an automatic fix attempt.
-            </div>
-          </div>
-        </div>
-      )
-    }
-
-    return this.props.children
-  }
-}
-
-
 export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
   code,
   sessionId,
@@ -98,7 +51,9 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
   const [renderError, setRenderError] = useState<RuntimeError | null>(null)
   const [isCompiling, setIsCompiling] = useState(false)
   const [isFixing, setIsFixing] = useState(false)
-  const [babelReady, setBabelReady] = useState<boolean>(typeof window !== 'undefined' && !!window.Babel)
+  const babelReady = useBabelReady()
+  const [hasRenderedOnce, setHasRenderedOnce] = useState(false)
+  const [componentKey, setComponentKey] = useState(0)
   
   // Ref for the DOM container where React will render
   const containerRef = useRef<HTMLDivElement>(null)
@@ -110,6 +65,8 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
   const lastErrorHashRef = useRef<string>('')
   const lastReportTimeRef = useRef<number>(0)
   const isInitializedRef = useRef<boolean>(false)
+  const usingFixedOverrideRef = useRef<boolean>(false)
+  const prevCodeRef = useRef<string | null>(null)
 
   // Live refs for props that change frequently
   const timeSecondsRef = useRef<number>(timeSeconds || 0)
@@ -132,18 +89,20 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
   }), [topic, isPlaying, timeSeconds, timeline])
 
   // Error reporting with deduplication and throttling
-  const reportError = useCallback(async (error: RuntimeError) => {
+  const reportError = useCallback(async (error: RuntimeError): Promise<string | null> => {
     const errorHash = `${error.message}-${error.stage}-${code.slice(0, 100)}`
     const now = Date.now()
     
     // Skip if same error reported recently (5s throttle)
     if (errorHash === lastErrorHashRef.current && now - lastReportTimeRef.current < 5000) {
-      return
+      try { console.log('CodeSlideRuntime: Skipping duplicate error report (throttled)', { error, errorHash }) } catch {}
+      return null
     }
     
     // Skip if already fixing (prevent infinite loops)
     if (isFixing) {
-      return
+      try { console.log('CodeSlideRuntime: Skipping error report because fix is in progress', { error }) } catch {}
+      return null
     }
 
     lastErrorHashRef.current = errorHash
@@ -161,17 +120,23 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
         platform: 'web'
       }
       
-      // Call your backend API to report the error (and potentially trigger auto-fix)
-      await apiService.reportTeacherRenderError(report)
+      // Call backend to attempt auto-fix and optionally return fixed code
+      try { console.log('CodeSlideRuntime: Reporting render error', { reportPreview: { message: report.error, codeLen: (report.code || '').length, topic: report.topic, sessionId: report.sessionId } }) } catch {}
+      const res = await apiService.reportTeacherRenderError(report)
+      try { console.log('CodeSlideRuntime: Report response', res) } catch {}
+      const fixed = res.success ? (res.data?.fixedCode || null) : null
+      return fixed
     } catch (reportError) {
       console.warn('CodeSlideRuntime: Failed to report render error:', reportError)
+      return null
     } finally {
       setIsFixing(false) // Reset fixing state
     }
   }, [sessionId, userId, topic, code, timeline, isFixing])
 
   // Handle errors from the dynamic component's error boundary
-  const handleDynamicComponentError = useCallback((error: Error) => {
+  const handleDynamicComponentError = useCallback(async (error: Error) => {
+    try { console.warn('CodeSlideRuntime: Dynamic component error', { message: error?.message }) } catch {}
     const runtimeError: RuntimeError = {
       message: error.message,
       stack: error.stack,
@@ -179,291 +144,54 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
     }
     setRenderError(runtimeError)
     onError?.(error) // Notify parent component
-    reportError(runtimeError) // Report to backend
+    const fixed = await reportError(runtimeError)
+    if (fixed) {
+      try {
+        const compiled = await compileTsxCode(fixed)
+        const env = buildEnv()
+        const Component = await execCompiled(compiled, env)
+        setLessonComponent(() => Component)
+        usingFixedOverrideRef.current = true
+        if (!hasRenderedOnce) setHasRenderedOnce(true)
+        setRenderError(null)
+      } catch (e) {
+        // Keep current fallback/last good if fixed compile fails
+      }
+    }
   }, [onError, reportError])
-
-  // Compile TSX code to JavaScript
-  const compileTsxCode = useCallback(async (tsxCode: string): Promise<string> => {
-    if (!window.Babel) {
-      throw new Error('Babel not loaded. Please ensure https://unpkg.com/@babel/standalone/babel.min.js is loaded.')
-    }
-    try {
-      const result = window.Babel.transform(tsxCode, {
-        filename: 'component.tsx',
-        presets: ['react', 'typescript'],
-      })
-      return result.code
-    } catch (error: any) {
-      throw new Error(`Compilation failed: ${error.message || String(error)}`)
-    }
-  }, [])
-
-  // Create runtime environment with available symbols
-  const createRuntimeEnvironment = useCallback(() => {
-    const utils = {
-      screen: {
-        width: window.innerWidth,
-        height: window.innerHeight
-      },
-      resolveImageUrl: (relativePath: string) => {
-        const baseUrl = process.env.REACT_APP_ORCHESTRATOR_URL || 'http://localhost:8003'
-        return `${baseUrl}${relativePath.startsWith('/') ? '' : '/'}${relativePath}`
-      }
-    }
-
-    // Lightweight motion helpers exposed to generated components (no imports needed)
-    // Motion helpers read live refs to remain dynamic without re-compiling
-    const motion: any = {}
-    Object.defineProperty(motion, 'time', {
-      get() { return timeSecondsRef.current || 0 },
-    })
-    motion.clamp = (x: number, min: number, max: number) => Math.max(min, Math.min(max, x))
-    motion.lerp = (a: number, b: number, t: number) => a + (b - a) * t
-    motion.easeInOut = (t: number) => {
-      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
-    }
-    motion.phaseProgress = (phase: number | string) => {
-      const events = (timelineRef.current || []).slice().sort((a, b) => (a.at || 0) - (b.at || 0))
-      if (!events.length) return 0
-      const currentT = timeSecondsRef.current || 0
-      let idx = -1
-      if (typeof phase === 'number') {
-        idx = phase
-      } else {
-        idx = events.findIndex(e => (e.event || '').toLowerCase().includes(String(phase).toLowerCase()))
-      }
-      if (idx < 0) idx = 1
-      const start = events[idx]?.at ?? events[0].at
-      const end = events[idx + 1]?.at ?? (start + 2)
-      if (currentT <= start) return 0
-      if (currentT >= end) return 1
-      return (currentT - start) / Math.max(0.0001, (end - start))
-    }
-
-    // Mock React Native components for web (simplify to basic HTML elements)
-    const View = ({ children, style, ...props }: any) => {
-      const webStyle = style ? {
-        ...style,
-        display: style.flex || style.flexGrow || style.flexShrink || style.flexBasis ? 'flex' : style.display || 'block',
-        flexDirection: style.flexDirection || 'column',
-        alignItems: style.alignItems || 'stretch',
-        justifyContent: style.justifyContent || 'flex-start',
-        boxSizing: 'border-box',
-      } : {}
-      return React.createElement('div', { style: webStyle, ...props }, children)
-    }
-
-    const Text = ({ children, style, ...props }: any) => {
-      const webStyle = style ? {
-        ...style,
-        display: 'inline',
-        boxSizing: 'border-box',
-      } : {}
-      return React.createElement('span', { style: webStyle, ...props }, children)
-    }
-
-    const Image = ({ source, style, resizeMode, ...props }: any) => {
-      const imgSrc = source?.uri || source;
-      const webStyle = {
-        ...style,
-        objectFit: resizeMode === 'contain' ? 'contain' : (resizeMode === 'cover' ? 'cover' : 'fill'),
-        width: style?.width || '100%',
-        height: style?.height || '100%',
-      };
-      return React.createElement('img', { src: imgSrc, style: webStyle, ...props });
-    }
-
-    const StyleSheet = {
-      create: (styles: any) => styles
-    }
-
-    const Dimensions = {
-      get: (dimension: 'window' | 'screen') => ({
-        width: window.innerWidth,
-        height: window.innerHeight
-      })
-    }
-
-    const Platform = {
-      OS: 'web'
-    }
-
-    // Basic Animated mock for web
-    const Animated = {
-      View: View,
-      Text: Text,
-      Image: Image,
-      Value: (value: number) => ({ _value: value, getValue: () => value, setValue: (v: number) => { (Animated.Value as any)._value = v } }), // Basic mock for value
-      timing: (value: any, config: any) => ({ start: (callback: Function) => { setTimeout(callback, config.duration || 0); } }),
-      sequence: (animations: any[]) => ({ start: (callback: Function) => { animations.forEach(a => a.start(() => {})); setTimeout(callback, 0); } }),
-      parallel: (animations: any[]) => ({ start: (callback: Function) => { Promise.all(animations.map(a => new Promise(res => a.start(res)))).then(() => callback()); } }),
-      useRef: React.useRef, // Explicitly provide React.useRef for Animated.useRef cases
-      useEffect: React.useEffect,
-      useState: React.useState
-    }
-
-    // SVG primitives
-    const Svg = ({ children, ...props }: any) => React.createElement('svg', props, children)
-    const Path = (props: any) => React.createElement('path', props)
-    const Rect = (props: any) => React.createElement('rect', props)
-    const Circle = (props: any) => React.createElement('circle', props)
-    const Line = (props: any) => React.createElement('line', props)
-    const Polygon = (props: any) => React.createElement('polygon', props)
-    const SvgText = (props: any) => React.createElement('text', props)
-
-    // Mock MermaidDiagram component
-    const MermaidDiagram = ({ code: diagramCode, ...props }: any) => (
-      <div style={{ padding: '20px', textAlign: 'center', color: '#666', border: '1px dashed #ccc', margin: '20px' }}>
-        Mermaid Diagram Placeholder:<br/>
-        <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.8em', margin: '10px 0' }}>{diagramCode}</pre>
-        (Actual rendering not supported in this runtime)
-      </div>
-    )
-
-    return {
-      React,
-      View, Text, Image, StyleSheet, Dimensions, Platform, Animated,
-      Svg, Path, Rect, Circle, Line, Polygon, SvgText,
-      MermaidDiagram,
-      utils,
-      motion,
-      props: { // These are the props explicitly available to the generated component
-        slide: { title: topicRef.current },
-        showCaptions: true,
-        isPlaying: isPlayingRef.current,
-        timeSeconds: timeSecondsRef.current,
-        timeline: timelineRef.current,
-        motion,
-        Svg, Path, Rect, Circle, Line, Polygon, SvgText
-      }
-    }
-  }, []) // Stable; uses live refs for dynamics
-
-  // Execute compiled code safely and return the React component
-  const executeCompiledCode = useCallback(async (compiledJsCode: string): Promise<React.ComponentType<any>> => {
-    try {
-      const env = createRuntimeEnvironment()
-      
-      // Create a mock module system for export default
-      const module = { exports: {} as any };
-      const exports = module.exports;
-
-      // Create a function that returns the component
-      // Use 'with' statement for exposing env variables safely (in a sandbox)
-      // Note: 'with' is generally discouraged in modern JS, but common in sandboxed eval.
-      const componentFactory = new Function(
-        ...Object.keys(env), 
-        'module', 
-        'exports', 
-        `
-        try {
-          ${compiledJsCode}
-          
-          // Try to get the default export from module.exports
-          if (module.exports && typeof module.exports === 'function') {
-            return module.exports;
-          }
-          if (module.exports && module.exports.default && typeof module.exports.default === 'function') {
-            return module.exports.default;
-          }
-          // Fallback to a global 'Lesson' or '_default' if no module.exports
-          if (typeof Lesson !== 'undefined' && typeof Lesson === 'function') {
-            return Lesson;
-          }
-          if (typeof _default !== 'undefined' && typeof _default === 'function') {
-            return _default;
-          }
-          throw new Error('No valid React component exported. Ensure it exports a function component.');
-        } catch (error) {
-          throw new Error('Runtime execution failed: ' + (error instanceof Error ? error.message : String(error)));
-        }
-        `
-      )
-      
-      const Component = componentFactory(...Object.values(env), module, exports)
-      
-      if (typeof Component !== 'function' && !(Component.prototype && Component.prototype.isReactComponent)) {
-        throw new Error('The executed code did not return a valid React component function or class.')
-      }
-
-      return Component
-    } catch (error: any) {
-      console.error('CodeSlideRuntime: Execute code error', error)
-      throw new Error(`Execution environment setup failed: ${error.message || String(error)}`)
-    }
-  }, [createRuntimeEnvironment])
-
-  // A lightweight cinematic fallback component (stable reference)
-  const FallbackVisuals = useMemo(() => {
-    const C: React.FC<any> = ({ slide, timeSeconds, timeline }) => {
-      const activeEvents = (timeline || []).filter((t: any) => (t?.at ?? 0) <= (timeSeconds || 0)).map((t: any) => t.event)
-      const showIntro = activeEvents.includes('intro') || activeEvents.length === 0
-      const showBeat2 = activeEvents.some((e: any) => (e || '').includes('reveal:1') || (e || '').includes('reveal:main'))
-      const showBeat3 = activeEvents.some((e: any) => (e || '').includes('reveal:2'))
-      const showBeat4 = activeEvents.some((e: any) => (e || '').includes('reveal:3'))
-      const t = timeSeconds || 0
-      const driftX = Math.sin(t * 0.6) * 6
-      const driftY = Math.cos(t * 0.5) * 5
-      return (
-        <div style={{ padding: '24px', backgroundColor: '#0f172a', color: '#e2e8f0', minHeight: '400px', fontFamily: 'Inter, system-ui, Arial', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <h1 style={{ fontSize: 28, fontWeight: 800, color: '#60a5fa', marginBottom: 16, transform: `translate(${driftX}px, ${driftY * 0.2}px)`, opacity: showIntro ? 1 : 0.9, transition: 'opacity 0.4s linear' }}>{slide?.title || 'Lesson Topic'}</h1>
-          {showIntro && <p style={{ opacity: 0.95, transition: 'opacity 0.5s ease' }}>Starting the lesson...</p>}
-          <div style={{ marginTop: 24, width: '90%', maxWidth: '640px' }}>
-            <svg width="100%" height="220" viewBox="0 0 800 220" style={{ display: 'block' }}>
-              <rect x="0" y="0" width="800" height="220" rx="10" fill="#0b1220" stroke="#1f2a44" />
-              <circle cx={120 + driftX} cy={110 + driftY} r="42" fill={showBeat2 ? '#22c55e' : '#475569'} style={{ transition: 'fill 0.4s ease' }} />
-              <rect x="200" y="72" width={showBeat3 ? 480 : 200} height="28" rx="8" fill="#334155" style={{ transition: 'width 0.5s ease' }} />
-              <rect x="200" y="112" width={showBeat4 ? 400 : 160} height="24" rx="8" fill="#1f2a44" style={{ transition: 'width 0.5s ease' }} />
-              <text x="200" y="60" fill="#94a3b8" fontSize="14">Core idea</text>
-            </svg>
-          </div>
-        </div>
-      )
-    }
-    return C
-  }, [])
-
-  // Effect to manage Babel loading
-  useEffect(() => {
-    if (window.Babel) {
-      setBabelReady(true)
-      return // Babel already loaded
-    }
-
-    const script = document.createElement('script')
-    script.src = 'https://unpkg.com/@babel/standalone/babel.min.js'
-    script.async = true
-    script.onload = () => {
-      console.log('CodeSlideRuntime: Babel loaded successfully.')
-      setBabelReady(true)
-    }
-    script.onerror = () => {
-      console.error('CodeSlideRuntime: Failed to load Babel.')
-      setRenderError({
-        message: 'Failed to load Babel compiler. Check network or script URL.',
-        stage: 'compile'
-      })
-    }
-    document.head.appendChild(script)
-
-    return () => {
-      if (script.parentNode) {
-        script.parentNode.removeChild(script)
-      }
-    }
-  }, []) // Empty dependency array means this runs once on mount
+  // Build runtime env on demand using current refs
+  const buildEnv = useCallback(() => createRuntimeEnvironment({
+    getTimeSeconds: () => timeSecondsRef.current || 0,
+    getTimeline: () => (timelineRef.current || []) as Array<{ at: number; event: string }>,
+    getTopic: () => topicRef.current,
+    getIsPlaying: () => !!isPlayingRef.current,
+  }), [])
 
   // Main compilation and component management effect
   useEffect(() => {
     if (!code) {
+      try { console.log('CodeSlideRuntime: No code provided yet') } catch {}
       setLessonComponent(null) // No code, no component
       return
+    }
+
+    // Reset override when incoming code changes
+    if (prevCodeRef.current !== code) {
+      usingFixedOverrideRef.current = false
+      prevCodeRef.current = code
+      try { console.log('CodeSlideRuntime: Incoming code changed', { length: (code || '').length }) } catch {}
     }
 
     const processCode = async () => {
       setIsCompiling(true)
       setRenderError(null) // Clear previous errors
-      setLessonComponent(null) // Clear previous component
+      // Keep the previous component on screen during recompilation to avoid jarring fallbacks
+
+      // If we are using a fixed override for this exact code payload, skip reprocessing
+      if (usingFixedOverrideRef.current) {
+        setIsCompiling(false)
+        return
+      }
 
       if (!window.Babel || !babelReady) {
         // If Babel isn't loaded yet, just show compiling state and wait for it
@@ -478,18 +206,46 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
           console.log('CodeSlideRuntime: Compiling AI code...')
           const compiled = await compileTsxCode(code)
           setCompiledJs(compiled)
-          const Component = await executeCompiledCode(compiled)
+          const env = buildEnv()
+          const Component = await execCompiled(compiled, env)
           setLessonComponent(() => Component) // Store the component function
+          setComponentKey(k => k + 1)
+          if (!hasRenderedOnce) setHasRenderedOnce(true)
           onRenderComplete?.()
         } catch (compileErr: any) {
           console.warn('CodeSlideRuntime: Compilation failed, using internal fallback.', compileErr)
-          setLessonComponent(() => FallbackVisuals)
+          // Lightweight telemetry to help diagnose frequent fallbacks
+          try {
+            const line1 = String(code || '').split('\n')[0] || ''
+            console.info('CodeSlideRuntime: First line of AI code:', line1.slice(0, 160))
+          } catch {}
+          // Only show fallback if we have never rendered successfully yet; otherwise keep last good frame
+          if (!hasRenderedOnce) {
+            setLessonComponent(() => FallbackVisuals)
+          }
           setCompiledJs(null) // No compiled JS for fallback
           onRenderComplete?.()
           const runtimeError: RuntimeError = { message: compileErr?.message || 'Compilation failed', stage: 'compile' }
           setRenderError(runtimeError)
           onError?.(compileErr)
-          reportError(runtimeError)
+          // Try immediate server-side fixed code and second-chance compile
+          const fixed = await reportError(runtimeError)
+          if (fixed) {
+            try { console.log('CodeSlideRuntime: Received fixed code', { length: (fixed || '').length, head: (fixed || '').slice(0, 120) }) } catch {}
+            try {
+              const compiled2 = await compileTsxCode(fixed)
+              const env2 = buildEnv()
+              const Component2 = await execCompiled(compiled2, env2)
+              setLessonComponent(() => Component2)
+              setComponentKey(k => k + 1)
+              usingFixedOverrideRef.current = true
+              if (!hasRenderedOnce) setHasRenderedOnce(true)
+              setRenderError(null)
+              return
+            } catch (e) {
+              // If fixed compile fails, keep fallback/last good
+            }
+          }
         }
       } catch (error: any) {
         console.error('CodeSlideRuntime: Error during initial code processing:', error)
@@ -501,35 +257,42 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
         setRenderError(runtimeError)
         onError?.(error)
         reportError(runtimeError)
-        setLessonComponent(null) // Ensure no broken component is rendered
+        // Keep last known-good component if we had one; avoid blank/flicker after first success
+        if (!hasRenderedOnce) {
+          setLessonComponent(() => FallbackVisuals)
+        }
       } finally {
         setIsCompiling(false)
       }
     }
 
     processCode()
-  }, [code, babelReady])
+  }, [code, babelReady, hasRenderedOnce])
 
   // Watchdog: if compilation takes too long or Babel is slow, show cinematic fallback immediately
   useEffect(() => {
-    if (!code) return
+    if (!code || hasRenderedOnce) return
     let cancelled = false
     const timeout = setTimeout(() => {
       if (cancelled) return
-      // If no component is ready yet, present fallback to avoid a blank/looping state
+      // Only before first successful render, present fallback to avoid blank screen
       if (!LessonComponent) {
+        try { console.log('CodeSlideRuntime: Watchdog triggered → showing fallback visuals') } catch {}
         setLessonComponent(() => FallbackVisuals)
       }
     }, 2000)
     return () => { cancelled = true; clearTimeout(timeout) }
-  }, [code, LessonComponent, FallbackVisuals])
+  }, [code, LessonComponent, FallbackVisuals, hasRenderedOnce])
 
   // On runtime/render errors, immediately swap to fallback visuals instead of error box
   useEffect(() => {
     if (renderError && !isFixing) {
-      setLessonComponent(() => FallbackVisuals)
+      if (!hasRenderedOnce) {
+        setLessonComponent(() => FallbackVisuals)
+      }
+      // After first render, keep last good component while fixer runs
     }
-  }, [renderError, isFixing, FallbackVisuals])
+  }, [renderError, isFixing, FallbackVisuals, hasRenderedOnce])
 
 
   // Effect to initialize React Root once and render the current LessonComponent
@@ -544,38 +307,15 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
     // This effect ensures the root is always rendering SOMETHING
     // It will re-render whenever LessonComponent or componentProps changes
     if (LessonComponent) {
-      const CinematicBackground: React.FC<{ t: number }> = ({ t }) => {
-        const driftX = Math.sin((t || 0) * 0.15) * 20
-        const driftY = Math.cos((t || 0) * 0.13) * 16
-        const blobScale = 1 + Math.sin((t || 0) * 0.25) * 0.05
-        return (
-          <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 0 }}>
-            <div style={{
-              position: 'absolute', width: '140%', height: '140%', left: '-20%', top: '-20%',
-              background: 'radial-gradient(1200px 800px at 30% 20%, rgba(59,130,246,0.18), transparent 60%)',
-              transform: `translate(${driftX}px, ${driftY}px)`
-            }} />
-            <div style={{
-              position: 'absolute', width: 600, height: 600, borderRadius: 9999,
-              background: 'radial-gradient(circle at 50% 50%, rgba(99,102,241,0.18), transparent 60%)',
-              filter: 'blur(40px)',
-              left: '10%', top: '30%',
-              transform: `scale(${blobScale}) translateY(${driftY * 0.4}px)`
-            }} />
-            <div style={{
-              position: 'absolute', width: 500, height: 500, borderRadius: 9999,
-              background: 'radial-gradient(circle at 50% 50%, rgba(34,197,94,0.12), transparent 60%)',
-              filter: 'blur(50px)',
-              right: '0%', top: '10%',
-              transform: `scale(${1.02 + Math.sin((t || 0) * 0.2) * 0.03}) translateX(${driftX * 0.3}px)`
-            }} />
-          </div>
-        )
-      }
-
       reactRootRef.current.render(
-        <DynamicComponentErrorBoundary onBoundaryError={handleDynamicComponentError}>
-          <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+        <DynamicComponentErrorBoundary key={componentKey} onBoundaryError={handleDynamicComponentError} fallback={
+          <div style={{ position: 'absolute', inset: 0 }}>
+            <div style={{ position: 'relative', zIndex: 2, width: '100%', height: '100%' }}>
+              {React.createElement(FallbackVisuals, componentProps)}
+            </div>
+          </div>
+        }>
+          <div style={{ position: 'absolute', inset: 0 }}>
             <CinematicBackground t={timeSeconds || 0} />
             <div style={{ position: 'relative', zIndex: 2, width: '100%', height: '100%' }}>
               {React.createElement(LessonComponent, componentProps)}
@@ -618,10 +358,11 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
     <div 
       ref={containerRef}
       style={{ 
+        position: 'absolute',
+        inset: 0,
         width: '100%', 
         height: '100%',
-        minHeight: '400px',
-        // Optional: style the container background if component doesn't fill it
+        minHeight: '500px',
         backgroundColor: '#0f172a' 
       }}
     />

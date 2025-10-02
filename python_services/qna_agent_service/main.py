@@ -466,7 +466,7 @@ async def ask_stream(request: Request):
                         model=model_id,
                         input=input_payload,
                         reasoning={"effort": "low"},
-                        text={"verbosity": "low"},
+                        text={"verbosity": "medium"},
                         max_output_tokens=1200,
                     ) as stream:
                         async for event in stream:

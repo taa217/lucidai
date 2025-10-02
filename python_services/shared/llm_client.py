@@ -108,7 +108,7 @@ class OpenAIClient(LLMClient):
                     model=selected_model,
                     input=input_payload,
                     reasoning={"effort": "low"},
-                    text={"verbosity": "low"},
+                    text={"verbosity": "medium"},
                     max_output_tokens=max_tokens
                 )
                 if getattr(resp, "output_text", None):
@@ -136,7 +136,7 @@ class OpenAIClient(LLMClient):
                             model=selected_model,
                             input=(input_payload if attachments else (input_payload + "\n\nContinue and conclude succinctly.")),
                             reasoning={"effort": "low"},
-                            text={"verbosity": "low"},
+                            text={"verbosity": "medium"},
                             max_output_tokens=fallback_max
                         )
                         if getattr(resp2, "output_text", None):
@@ -209,7 +209,7 @@ class OpenAIClient(LLMClient):
                             model=selected_model,
                             input=input_payload,
                             reasoning={"effort": "low"},
-                            text={"verbosity": "low"},
+                            text={"verbosity": "medium"},
                             max_output_tokens=max_tokens
                         )
                         # Prefer aggregated text when available
@@ -240,7 +240,7 @@ class OpenAIClient(LLMClient):
                                     model=self.default_model,
                                     input=(input_payload if attachments else (input_payload + "\n\nContinue and provide the final answer succinctly.")),
                                     reasoning={"effort": "low"},
-                                    text={"verbosity": "low"},
+                                    text={"verbosity": "medium"},
                                     max_output_tokens=fallback_max
                                 )
                                 if getattr(resp2, "output_text", None):
@@ -264,7 +264,7 @@ class OpenAIClient(LLMClient):
                         raise Exception(
                             f"OpenAI API error after retries (max_completion_tokens + Responses API): {str(e3)}"
                         )
-            raise Exception(f"OpenAI API error: {error_text}")
+            raise Exception(f"{error_text}")
 
 
 class AnthropicClient(LLMClient):
