@@ -7,7 +7,14 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Enable CORS (env-driven for production)
-  const corsOriginEnv = process.env.CORS_ORIGIN;
+  const envCors = [
+    process.env.CORS_ORIGIN,
+    process.env.CORS_ORIGINS, // support plural env var name
+    process.env.FRONTEND_URL,
+  ]
+    .filter(Boolean)
+    .join(',');
+
   const defaultOrigins: (string | RegExp)[] = [
     'http://localhost:3000',
     'http://localhost:8081',
@@ -21,11 +28,22 @@ async function bootstrap() {
     /^http:\/\/172\.\d+\.\d+\.\d+:(19000|19006|8081)$/, // Local network
     /^http:\/\/127\.0\.0\.1:\d+$/,
   ];
-  const origins = corsOriginEnv ? corsOriginEnv.split(',').map(s => s.trim()).filter(Boolean) : defaultOrigins;
+  const origins: (string | RegExp)[] = [...defaultOrigins, /^https:\/\/[a-z0-9-]+\.vercel\.app$/];
+  if (envCors) {
+    envCors
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .forEach((o) => origins.push(o));
+  }
+  if (process.env.VERCEL_URL) {
+    const vercelOrigin = `https://${process.env.VERCEL_URL}`;
+    if (!origins.includes(vercelOrigin)) origins.push(vercelOrigin);
+  }
   app.enableCors({
     origin: origins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-User-ID', 'x-user-id'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-User-ID', 'x-user-id', 'X-Requested-With', 'Accept', 'Origin'],
     credentials: true,
   });
 
