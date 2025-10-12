@@ -1,4 +1,3 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
@@ -60,11 +59,11 @@ async function bootstrapExpressServer() {
   return expressInstance;
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
   if (!cachedServer) {
     cachedServer = await bootstrapExpressServer();
   }
-  return (cachedServer as unknown as (req: VercelRequest, res: VercelResponse) => void)(req, res);
+  return (cachedServer as unknown as (req: any, res: any) => void)(req, res);
 }
 
 
