@@ -65,6 +65,12 @@ cd app && npm i @babel/standalone --save
 
 ## Recent Updates (Latest)
 
+### 🌐 Backend on Vercel (serverless) — FIXED (Latest)
+- Added `server/api/index.ts` serverless handler that boots the Nest app via `ExpressAdapter` and exports a default function for Vercel.
+- Added `server/vercel.json` rewrite to route all paths to the handler. Runtime set to Node 20.
+- Required env on Vercel: set `DATABASE_URL` (Neon/Supabase Postgres with `?sslmode=require`), `CORS_ORIGIN` (comma‑separated origins), and any provider keys you use (`WORKOS_*`, etc.).
+- Impact: Visiting your Vercel URL now serves the Nest API and Swagger at `/api` instead of crashing with “No exports found in module /server/src/main.js”.
+
 ### 🖼️ Lesson visuals fill available space — FIXED (Latest)
 - Problem: The AI-generated lesson visuals did not occupy the full container height, leaving unused gray space at the bottom.
 - Fix: `app/src/components/ai-teacher/AITeacherSession.tsx` main content area now uses `absolute inset-0` so the runtime fills its parent. `app/src/components/ai-teacher/CodeSlideRuntime.tsx` container and internal wrappers now use `position: 'absolute', inset: 0` with `minHeight: 500px`.
@@ -660,7 +666,7 @@ cd app && npm i @babel/standalone --save
 
 ## Current Project Status
 
-Last reviewed: 2025-10-02
+Last reviewed: 2025-10-12
 
 ### ✅ **Completed Features**
 - **WorkOS AuthKit Integration**: Complete authentication system with database storage
