@@ -9,3 +9,4 @@ google-generativeai>=0.8.0
 backoff==2.2.1
 sqlitedict==2.1.0
 PyPDF2==3.0.1
+langgraph>=0.3.4

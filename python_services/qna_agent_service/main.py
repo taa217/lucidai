@@ -11,7 +11,10 @@ from typing import List, AsyncGenerator, Optional, Dict, Any
 from fastapi import FastAPI, HTTPException, BackgroundTasks, Request
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
+try:
+    import uvicorn  # Optional for serverless
+except Exception:  # pragma: no cover
+    uvicorn = None  # type: ignore
 
 # Import shared modules
 import sys
