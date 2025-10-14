@@ -1,8 +1,8 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/qna.py", "use": "@vercel/python" },
-    { "src": "api/orch.py", "use": "@vercel/python" }
+    { "src": "api/qna.py", "use": "@vercel/python", "config": { "pythonVersion": "3.11", "includeFiles": ["api/requirements.txt"] } },
+    { "src": "api/orch.py", "use": "@vercel/python", "config": { "pythonVersion": "3.11", "includeFiles": ["api/requirements.txt"] } }
   ],
   "routes": [
     { "src": "/api/qna(?:/.*)?", "dest": "/api/qna.py" },
