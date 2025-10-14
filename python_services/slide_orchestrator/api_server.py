@@ -15,7 +15,8 @@ from datetime import datetime
 from pathlib import Path
 from shared.voice_client import synthesize_openai_tts
 
-app = FastAPI()
+import os
+app = FastAPI(root_path=os.getenv("FASTAPI_ROOT_PATH", ""))
 
 # CORS (dev): allow app to call endpoints directly and for preflight to succeed
 app.add_middleware(

@@ -57,7 +57,8 @@ app = FastAPI(
     title="Lucid Learn AI - Q&A Agent Service",
     description="Intelligent question and answer agent for personalized learning",
     version="0.1.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    root_path=os.getenv("FASTAPI_ROOT_PATH", "")
 )
 
 # Add CORS middleware for cross-origin requests
