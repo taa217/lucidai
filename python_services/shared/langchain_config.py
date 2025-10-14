@@ -7,14 +7,45 @@ import os
 import logging
 from typing import Dict, Any, Optional, List
 from .config import get_settings
-from langchain.llms.base import LLM
-from langchain_openai import ChatOpenAI
-from langchain_anthropic import ChatAnthropic
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.memory import ConversationBufferWindowMemory
-from langchain.agents import initialize_agent, AgentType
-from langchain.tools import BaseTool
-from langchain.schema import BaseMessage, HumanMessage, AIMessage
+from typing import Any  # fallback typing
+
+# Defer heavy LangChain imports for serverless compatibility.
+# These are optional; the QnA service only needs get_document_content.
+try:  # Minimal, type-only import
+    from langchain_core.messages import BaseMessage  # light-weight package
+except Exception:  # pragma: no cover
+    BaseMessage = Any  # type: ignore
+
+try:  # Optional heavy deps; guarded so health endpoints work without them
+    from langchain.llms.base import LLM  # type: ignore
+    from langchain_openai import ChatOpenAI  # type: ignore
+    from langchain_anthropic import ChatAnthropic  # type: ignore
+    from langchain_google_genai import ChatGoogleGenerativeAI  # type: ignore
+    from langchain.memory import ConversationBufferWindowMemory  # type: ignore
+    from langchain.agents import initialize_agent, AgentType  # type: ignore
+    from langchain.tools import BaseTool  # type: ignore
+    from langchain.schema import BaseMessage as _LCBaseMessage, HumanMessage, AIMessage  # type: ignore
+except Exception:  # pragma: no cover
+    # Provide thin fallbacks so importing this module doesn't crash on Vercel
+    LLM = Any  # type: ignore
+    ChatOpenAI = ChatAnthropic = ChatGoogleGenerativeAI = None  # type: ignore
+    HumanMessage = AIMessage = None  # type: ignore
+    AgentType = None  # type: ignore
+    BaseTool = Any  # type: ignore
+
+    class _DummyChatMemory:
+        def __init__(self):
+            self.messages = []
+        def add_user_message(self, text: str) -> None:
+            self.messages.append({"role": "user", "content": text})
+        def add_ai_message(self, text: str) -> None:
+            self.messages.append({"role": "assistant", "content": text})
+
+    class ConversationBufferWindowMemory:  # type: ignore
+        def __init__(self, k: int = 10, return_messages: bool = True) -> None:
+            self.chat_memory = _DummyChatMemory()
+        def clear(self) -> None:
+            self.chat_memory.messages = []
 import httpx
 import time
 import asyncio
@@ -104,7 +135,7 @@ class LLMProvider:
     }
     
     @classmethod
-    def get_llm(cls, provider: str = 'openai', model: str = None, **kwargs) -> LLM:
+    def get_llm(cls, provider: str = 'openai', model: str = None, **kwargs) -> Any:
         """Get configured LLM instance with fallback support"""
         try:
             provider = provider.lower()
@@ -122,7 +153,7 @@ class LLMProvider:
                 'max_tokens': kwargs.get('max_tokens', 2000),
             }
             
-            if provider == 'openai':
+            if provider == 'openai' and ChatOpenAI is not None:
                 api_key = kwargs.get('api_key') or settings.openai_api_key
                 if not api_key:
                     logger.warning("OpenAI API key not found, trying fallback providers...")
@@ -134,7 +165,7 @@ class LLMProvider:
                     **default_params
                 )
             
-            elif provider == 'anthropic':
+            elif provider == 'anthropic' and ChatAnthropic is not None:
                 api_key = kwargs.get('api_key') or settings.anthropic_api_key
                 if not api_key:
                     logger.warning("Anthropic API key not found, trying fallback providers...")
@@ -146,7 +177,7 @@ class LLMProvider:
                     **default_params
                 )
             
-            elif provider == 'google':
+            elif provider == 'google' and ChatGoogleGenerativeAI is not None:
                 api_key = kwargs.get('api_key') or settings.google_api_key
                 if not api_key:
                     logger.warning("Google AI API key not found, trying fallback providers...")
@@ -171,12 +202,12 @@ class LLMProvider:
             'max_tokens': kwargs.get('max_tokens', 2000),
         }
         
-        # Try providers in order of preference
+        # Try providers in order of preference (only if corresponding classes exist)
         fallback_providers = ['openai', 'anthropic', 'google']
         
         for provider in fallback_providers:
             try:
-                if provider == 'openai':
+                if provider == 'openai' and ChatOpenAI is not None:
                     api_key = settings.openai_api_key
                     if api_key:
                         return ChatOpenAI(
@@ -185,7 +216,7 @@ class LLMProvider:
                             **default_params
                         )
                 
-                elif provider == 'anthropic':
+                elif provider == 'anthropic' and ChatAnthropic is not None:
                     api_key = settings.anthropic_api_key
                     if api_key:
                         return ChatAnthropic(
@@ -194,7 +225,7 @@ class LLMProvider:
                             **default_params
                         )
                 
-                elif provider == 'google':
+                elif provider == 'google' and ChatGoogleGenerativeAI is not None:
                     api_key = settings.google_api_key
                     if api_key:
                         return ChatGoogleGenerativeAI(

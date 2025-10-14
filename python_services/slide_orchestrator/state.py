@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from typing import Annotated, Dict, List, Sequence, TypedDict
 
-from langchain_core.messages import BaseMessage
+try:
+    from langchain_core.messages import BaseMessage
+except Exception:
+    from typing import Any as BaseMessage  # lightweight fallback for serverless
 from langgraph.graph.message import add_messages
 
 # ---------------------------------------------------------------------------

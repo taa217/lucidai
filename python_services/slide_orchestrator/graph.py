@@ -12,8 +12,11 @@ import subprocess
 import sys
 from typing import Any, Dict
 
-import nest_asyncio
-nest_asyncio.apply()
+try:
+    import nest_asyncio  # type: ignore
+    nest_asyncio.apply()
+except Exception:
+    pass
 
 from langgraph.graph import StateGraph, START, END
 
