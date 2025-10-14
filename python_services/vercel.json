@@ -1,9 +1,9 @@
 {
   "version": 2,
-  "functions": {
-    "api/qna.py": { "runtime": "python3.11", "maxDuration": 60, "memory": 1024 },
-    "api/orch.py": { "runtime": "python3.11", "maxDuration": 60, "memory": 1024 }
-  },
+  "builds": [
+    { "src": "api/qna.py", "use": "@vercel/python" },
+    { "src": "api/orch.py", "use": "@vercel/python" }
+  ],
   "routes": [
     { "src": "/api/qna(?:/.*)?", "dest": "/api/qna.py" },
     { "src": "/api/orch(?:/.*)?", "dest": "/api/orch.py" }
