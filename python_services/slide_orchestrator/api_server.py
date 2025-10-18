@@ -68,29 +68,32 @@ async def list_voices():
     ]
     return {"provider": "openai", "voices": voices, "timestamp": datetime.utcnow().isoformat()}
 
-# Use absolute path for generated images directory
-
-# Point to the project root's storage/generated_images
+# Configure writable storage directories
+# In serverless (Vercel), local FS is read-only except /tmp. Prefer /tmp.
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-images_dir = os.path.join(PROJECT_ROOT, "storage", "generated_images")
-audio_dir = os.path.join(PROJECT_ROOT, "storage", "generated_audio")
+is_serverless = bool(os.environ.get("VERCEL") or os.environ.get("VERCEL_REGION") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
+base_storage_dir = os.environ.get("WRITABLE_DIR") or ("/tmp/lucid-storage" if is_serverless else os.path.join(PROJECT_ROOT, "storage"))
 
-# Ensure the directory exists
-os.makedirs(images_dir, exist_ok=True)
-os.makedirs(audio_dir, exist_ok=True)
+images_dir = os.path.join(base_storage_dir, "generated_images")
+audio_dir = os.path.join(base_storage_dir, "generated_audio")
 
-# Serve generated images as static files
+# Best-effort create only when writable; ignore errors on read-only FS
+try:
+    os.makedirs(images_dir, exist_ok=True)
+    os.makedirs(audio_dir, exist_ok=True)
+except Exception:
+    pass
+
+# Serve generated images/audio as static files. Allow missing dirs on serverless.
 app.mount(
     "/storage/generated_images",
-    StaticFiles(directory=images_dir),
-    name="generated_images"
+    StaticFiles(directory=images_dir, check_dir=False),
+    name="generated_images",
 )
-
-# Serve generated audio as static files
 app.mount(
     "/storage/generated_audio",
-    StaticFiles(directory=audio_dir),
-    name="generated_audio"
+    StaticFiles(directory=audio_dir, check_dir=False),
+    name="generated_audio",
 )
 
 class SlideRequest(BaseModel):
