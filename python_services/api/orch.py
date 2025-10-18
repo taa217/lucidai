@@ -1,9 +1,18 @@
 """Vercel serverless entrypoint for the Slide Orchestrator FastAPI app.
 
-Expose the ASGI `app` for Vercel. Set FASTAPI_ROOT_PATH=/api/orch so routes
-resolve correctly when deployed under /api/orch/*.
+Rewrites the ASGI scope path to strip the "/api/orch" prefix so FastAPI
+routes like "/health" resolve correctly on Vercel.
 """
 
-from slide_orchestrator.api_server import app  # ASGI app expected by Vercel
+from slide_orchestrator.api_server import app as fastapi_app  # underlying app
+
+PREFIX = "/api/orch"
+
+async def app(scope, receive, send):  # ASGI shim expected by Vercel
+    if scope.get("type") in {"http", "websocket"}:
+        path = scope.get("path", "")
+        if path.startswith(PREFIX):
+            scope = {**scope, "path": path[len(PREFIX):] or "/"}
+    await fastapi_app(scope, receive, send)
 
 

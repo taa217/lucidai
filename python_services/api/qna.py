@@ -1,9 +1,18 @@
 """Vercel serverless entrypoint for the Q&A FastAPI app.
 
-This exposes the FastAPI `app` so Vercel's Python runtime can serve it
-under the /api/qna path (configure FASTAPI_ROOT_PATH=/api/qna on Vercel).
+Rewrites the ASGI scope path to strip the "/api/qna" prefix so FastAPI
+routes like "/health" resolve correctly on Vercel.
 """
 
-from qna_agent_service.main import app  # ASGI app expected by Vercel
+from qna_agent_service.main import app as fastapi_app  # underlying ASGI app
+
+PREFIX = "/api/qna"
+
+async def app(scope, receive, send):  # ASGI entrypoint expected by Vercel
+    if scope.get("type") in {"http", "websocket"}:
+        path = scope.get("path", "")
+        if path.startswith(PREFIX):
+            scope = {**scope, "path": path[len(PREFIX):] or "/"}
+    await fastapi_app(scope, receive, send)
 
 
