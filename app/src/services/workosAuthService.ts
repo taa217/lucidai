@@ -27,8 +27,9 @@ class WorkOSAuthService {
 
   constructor() {
     this.clientId = process.env.REACT_APP_WORKOS_CLIENT_ID || '';
-    this.baseUrl = process.env.REACT_APP_WORKOS_BASE_URL || 'http://localhost:3001';
-    this.redirectUri = process.env.REACT_APP_WORKOS_REDIRECT_URI || 'http://localhost:3000/auth/callback';
+    this.baseUrl = process.env.REACT_APP_WORKOS_BASE_URL || process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001';
+    this.redirectUri = process.env.REACT_APP_WORKOS_REDIRECT_URI ||
+      (typeof window !== 'undefined' && window.location?.origin ? `${window.location.origin}/auth/callback` : 'http://localhost:3000/auth/callback');
     
     if (!this.clientId) {
       console.error('REACT_APP_WORKOS_CLIENT_ID is required');

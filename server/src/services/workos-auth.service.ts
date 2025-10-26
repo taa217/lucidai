@@ -65,16 +65,22 @@ export class WorkOSAuthService {
     return this.clientId;
   }
 
-  async getAuthorizationUrl(params: { clientId: string; redirectUri: string }): Promise<string> {
+  async getAuthorizationUrl(params: { clientId: string; redirectUri?: string }): Promise<string> {
     try {
-      const { clientId, redirectUri } = params;
+      const { clientId } = params;
+      const envRedirect =
+        this.configService.get<string>('WORKOS_REDIRECT_URI') ||
+        (this.configService.get<string>('FRONTEND_URL')
+          ? `${this.configService.get<string>('FRONTEND_URL')!.replace(/\/$/, '')}/auth/callback`
+          : undefined);
+      const redirectUri = params.redirectUri || envRedirect;
       
       console.log('🔍 WorkOS - Generating authorization URL with:', { clientId, redirectUri });
       
       // Use the correct WorkOS authorization URL generation with required provider
       const authorizationUrl = this.workos.userManagement.getAuthorizationUrl({
         clientId,
-        redirectUri,
+        redirectUri: redirectUri as string,
         state: this.generateState(),
         provider: 'authkit', // Required parameter for WorkOS AuthKit
       });

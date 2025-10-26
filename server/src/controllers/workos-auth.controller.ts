@@ -21,11 +21,15 @@ import {
 } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { WorkOSAuthService } from '../services/workos-auth.service';
+import { ConfigService } from '@nestjs/config';
 
 @ApiTags('WorkOS Authentication')
 @Controller('auth/workos')
 export class WorkOSAuthController {
-  constructor(private workosAuthService: WorkOSAuthService) {}
+  constructor(
+    private workosAuthService: WorkOSAuthService,
+    private configService: ConfigService,
+  ) {}
 
   @Get('authorize')
   @ApiOperation({ summary: 'Get WorkOS authorization URL and redirect' })
@@ -40,7 +44,12 @@ export class WorkOSAuthController {
     try {
       // Use default values if not provided
       const finalClientId = clientId || this.workosAuthService.getClientId();
-      const finalRedirectUri = redirectUri || 'http://localhost:3000/auth/callback';
+      const defaultRedirectFromEnv =
+        this.configService.get<string>('WORKOS_REDIRECT_URI') ||
+        (this.configService.get<string>('FRONTEND_URL')
+          ? `${this.configService.get<string>('FRONTEND_URL')!.replace(/\/$/, '')}/auth/callback`
+          : 'http://localhost:3000/auth/callback');
+      const finalRedirectUri = redirectUri || defaultRedirectFromEnv;
       
       console.log('🔍 WorkOS - GET /authorize called with:', { finalClientId, finalRedirectUri });
       
