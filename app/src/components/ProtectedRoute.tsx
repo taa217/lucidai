@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { workosAuthService } from '../services/workosAuthService';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -41,9 +42,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    // Redirect to WorkOS custom login endpoint
-    const redirectUri = `${window.location.origin}/auth/callback`;
-    const loginUrl = `${process.env.REACT_APP_WORKOS_BASE_URL || 'http://localhost:3001'}/auth/workos/authorize?redirectUri=${encodeURIComponent(redirectUri)}`;
+    // Redirect to WorkOS custom login endpoint using runtime-safe redirect URI
+    const redirectUri = workosAuthService.getRedirectUri();
+    const loginUrl = `${workosAuthService.getBaseUrl()}/auth/workos/authorize?redirectUri=${encodeURIComponent(redirectUri)}`;
     window.location.href = loginUrl;
     return null;
   }

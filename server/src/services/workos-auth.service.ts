@@ -32,6 +32,8 @@ export class WorkOSAuthService {
   private apiKey: string;
   private cookiePassword: string;
   private clientId: string;
+  private allowedRedirectUris: string[];
+  private normalizedAllowedRedirectUris: string[];
 
   constructor(
     private configService: ConfigService,
@@ -57,6 +59,16 @@ export class WorkOSAuthService {
     this.apiKey = apiKey;
     this.cookiePassword = cookiePassword;
     this.clientId = clientId;
+    const allowedRedirectEnv = this.configService.get<string>('WORKOS_ALLOWED_REDIRECT_URIS');
+    this.allowedRedirectUris = allowedRedirectEnv
+      ? allowedRedirectEnv
+          .split(',')
+          .map((uri) => uri.trim())
+          .filter(Boolean)
+      : [];
+    this.normalizedAllowedRedirectUris = this.allowedRedirectUris.map((uri) =>
+      this.normalizeForComparison(uri)
+    );
     // Pass clientId when initializing the SDK (required by session helpers)
     this.workos = new WorkOS(this.apiKey, { clientId: this.clientId });
   }
@@ -73,7 +85,8 @@ export class WorkOSAuthService {
         (this.configService.get<string>('FRONTEND_URL')
           ? `${this.configService.get<string>('FRONTEND_URL')!.replace(/\/$/, '')}/auth/callback`
           : undefined);
-      const redirectUri = params.redirectUri || envRedirect;
+      const redirectCandidate = params.redirectUri || envRedirect;
+      const redirectUri = this.ensureRedirectAllowed(redirectCandidate);
       
       console.log('🔍 WorkOS - Generating authorization URL with:', { clientId, redirectUri });
       
@@ -101,6 +114,7 @@ export class WorkOSAuthService {
   }): Promise<WorkOSAuthResult> {
     try {
       const { code, state, clientId, redirectUri } = params;
+      this.ensureRedirectAllowed(redirectUri);
 
       // Authenticate with WorkOS using the authorization code
       const authenticateResponse = await this.workos.userManagement.authenticateWithCode({
@@ -316,6 +330,37 @@ export class WorkOSAuthService {
   private generateState(): string {
     // Generate a random state parameter for security
     return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  }
+
+  private normalizeForComparison(uri: string): string {
+    try {
+      const parsed = new URL(uri);
+      parsed.hash = '';
+      parsed.pathname = parsed.pathname.replace(/\/+$/, '');
+      return parsed.toString();
+    } catch (error) {
+      console.warn('Invalid WORKOS redirect URI configured:', uri, error);
+      return uri.trim();
+    }
+  }
+
+  private ensureRedirectAllowed(redirectUri?: string): string {
+    if (!redirectUri) {
+      throw new Error('Redirect URI is required');
+    }
+
+    if (this.normalizedAllowedRedirectUris.length === 0) {
+      return redirectUri;
+    }
+
+    const normalized = this.normalizeForComparison(redirectUri);
+    if (!this.normalizedAllowedRedirectUris.includes(normalized)) {
+      throw new Error(
+        `Redirect URI "${redirectUri}" is not allowed. Update WORKOS_ALLOWED_REDIRECT_URIS to include it.`
+      );
+    }
+
+    return redirectUri;
   }
 
   private async findOrCreateWorkOSUser(workOSUser: WorkOSUser): Promise<WorkOSUser> {

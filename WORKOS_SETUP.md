@@ -23,10 +23,12 @@ This guide will help you set up WorkOS AuthKit authentication for the Lucid app,
 ### 1.2 Configure Redirect URIs
 
 1. In your WorkOS application settings, go to the "Redirects" section
-2. Add the following redirect URIs:
-   - **Redirect URI**: `http://localhost:8081/auth/callback` (for web app)
-   - **Login Endpoint**: `http://localhost:3001/auth/workos/login` (for backend)
-   - **Logout Redirect**: `http://localhost:8081/auth/logout` (for web app)
+2. Add the redirect URIs for every environment that can initiate auth:
+   - **Development**: `http://localhost:3000/auth/callback`
+   - **Preview / Staging**: e.g. `https://lucidai-eight.vercel.app/auth/callback`
+   - **Custom domain**: e.g. `https://lucid-ai.co/auth/callback`
+3. Set the **Login endpoint** to your deployed backend, for example `https://lucidai-m3m2.vercel.app/auth/workos/authorize`
+4. Add logout targets that match the same origins, such as `https://lucid-ai.co`
 
 ### 1.3 Get Your Credentials
 
@@ -83,16 +85,22 @@ The `server/src/modules/auth.module.ts` has been updated to include WorkOS servi
 
 ## Step 3: Frontend Configuration
 
-### 3.1 Environment Variables
+### 3.1 Environment Variables (React Web)
 
 Create a `.env` file in the `app` directory with the following variables:
 
 ```env
 # WorkOS Configuration
-EXPO_PUBLIC_WORKOS_CLIENT_ID=client_your_workos_client_id_here
-EXPO_PUBLIC_WORKOS_BASE_URL=http://localhost:3001
-EXPO_PUBLIC_WORKOS_REDIRECT_URI=http://localhost:8081/auth/callback
+REACT_APP_WORKOS_CLIENT_ID=client_your_workos_client_id_here
+REACT_APP_WORKOS_BASE_URL=http://localhost:3001
+REACT_APP_WORKOS_ALLOWED_REDIRECT_URIS=http://localhost:3000/auth/callback,https://lucidai-eight.vercel.app/auth/callback,https://lucid-ai.co/auth/callback
+REACT_APP_WORKOS_CALLBACK_PATH=/auth/callback
+
+# Optional: fallback redirect if you prefer a single static value
+# REACT_APP_WORKOS_REDIRECT_URI=https://lucid-ai.co/auth/callback
 ```
+
+> The frontend automatically prefers the current browser origin when it matches the allow list, so the same build can serve every approved domain without rebuilds.
 
 ### 3.2 Frontend Files Created
 
@@ -189,9 +197,9 @@ For production, update the environment variables:
 WORKOS_API_KEY=sk_live_your_production_api_key
 WORKOS_CLIENT_ID=client_your_production_client_id
 WORKOS_COOKIE_PASSWORD=your_production_cookie_password
-
-# Update redirect URIs for production
-EXPO_PUBLIC_WORKOS_REDIRECT_URI=https://yourdomain.com/auth/callback
+WORKOS_REDIRECT_URI=https://lucid-ai.co/auth/callback
+FRONTEND_URL=https://lucid-ai.co
+WORKOS_ALLOWED_REDIRECT_URIS=https://lucid-ai.co/auth/callback,https://lucidai-eight.vercel.app/auth/callback
 ```
 
 ### 7.2 Update WorkOS Dashboard
