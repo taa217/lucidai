@@ -24,23 +24,123 @@ class WorkOSAuthService {
   private clientId: string;
   private baseUrl: string;
   private redirectUri: string;
+  private allowedRedirectUris: string[];
+  private normalizedAllowedRedirectUris: string[];
+  private callbackPath: string;
 
   constructor() {
     this.clientId = process.env.REACT_APP_WORKOS_CLIENT_ID || '';
-    this.baseUrl = process.env.REACT_APP_WORKOS_BASE_URL || process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001';
-    this.redirectUri = process.env.REACT_APP_WORKOS_REDIRECT_URI ||
-      (typeof window !== 'undefined' && window.location?.origin ? `${window.location.origin}/auth/callback` : 'http://localhost:3000/auth/callback');
+    const configuredBaseUrl = process.env.REACT_APP_WORKOS_BASE_URL || process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001';
+    this.baseUrl = configuredBaseUrl.replace(/\/+$/, '');
+    this.callbackPath = this.normalizeCallbackPath(process.env.REACT_APP_WORKOS_CALLBACK_PATH);
+    this.allowedRedirectUris = this.buildAllowedRedirectUris();
+    this.normalizedAllowedRedirectUris = this.allowedRedirectUris.map((uri) => this.normalizeForComparison(uri));
+    this.redirectUri = this.resolveRedirectUri();
     
     if (!this.clientId) {
       console.error('REACT_APP_WORKOS_CLIENT_ID is required');
     }
   }
 
+  private normalizeCallbackPath(path?: string): string {
+    const value = (path && path.trim()) || '/auth/callback';
+    if (!value.startsWith('/')) {
+      return `/${value.replace(/^\/*/, '')}`;
+    }
+    return value.replace(/\/$/, '');
+  }
+
+  private buildAllowedRedirectUris(): string[] {
+    const rawList = [
+      process.env.REACT_APP_WORKOS_REDIRECT_URI,
+      process.env.REACT_APP_WORKOS_ALLOWED_REDIRECT_URIS,
+    ]
+      .filter(Boolean)
+      .join(',');
+
+    return rawList
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+  }
+
+  private normalizeForComparison(uri: string): string {
+    try {
+      const parsed = new URL(uri);
+      parsed.hash = '';
+      // Remove trailing slash for comparison consistency
+      parsed.pathname = parsed.pathname.replace(/\/+$/, '');
+      return parsed.toString();
+    } catch (error) {
+      console.warn('Invalid redirect URI encountered while normalizing:', uri, error);
+      return uri.trim();
+    }
+  }
+
+  private buildRuntimeRedirectUri(): string | null {
+    if (typeof window === 'undefined' || !window.location?.origin) {
+      return null;
+    }
+    const origin = window.location.origin.replace(/\/+$/, '');
+    return `${origin}${this.callbackPath}`;
+  }
+
+  private resolveRedirectUri(): string {
+    const runtimeRedirect = this.buildRuntimeRedirectUri();
+
+    if (runtimeRedirect) {
+      const runtimeMatches = this.normalizedAllowedRedirectUris.includes(
+        this.normalizeForComparison(runtimeRedirect)
+      );
+
+      if (runtimeMatches || this.normalizedAllowedRedirectUris.length === 0) {
+        return runtimeRedirect;
+      }
+
+      console.warn(
+        '[WorkOS] Runtime redirect URI is not in the configured allow list. Falling back to first allowed URI.',
+        {
+          runtimeRedirect,
+          allowedRedirectUris: this.allowedRedirectUris,
+        }
+      );
+    }
+
+    if (this.allowedRedirectUris.length > 0) {
+      return this.allowedRedirectUris[0];
+    }
+
+    // Final fallback for development environments
+    return 'http://localhost:3000/auth/callback';
+  }
+
+  getRedirectUri(): string {
+    const runtimeRedirect = this.buildRuntimeRedirectUri();
+    if (runtimeRedirect) {
+      const runtimeNormalized = this.normalizeForComparison(runtimeRedirect);
+      const currentNormalized = this.normalizeForComparison(this.redirectUri);
+
+      const runtimeAllowed =
+        this.normalizedAllowedRedirectUris.length === 0 ||
+        this.normalizedAllowedRedirectUris.includes(runtimeNormalized);
+
+      if (runtimeAllowed && runtimeNormalized !== currentNormalized) {
+        this.redirectUri = runtimeRedirect;
+      }
+    }
+
+    return this.redirectUri;
+  }
+
+  getBaseUrl(): string {
+    return this.baseUrl;
+  }
+
   // Get authorization URL from backend
   async getAuthorizationUrl(): Promise<string> {
     try {
       const url = new URL(`${this.baseUrl}/auth/workos/authorize`);
-      url.searchParams.set('redirectUri', this.redirectUri);
+      url.searchParams.set('redirectUri', this.getRedirectUri());
       
       const response = await fetch(url.toString(), {
         method: 'GET',
@@ -73,7 +173,7 @@ class WorkOSAuthService {
           code,
           state,
           clientId: this.clientId,
-          redirectUri: this.redirectUri,
+          redirectUri: this.getRedirectUri(),
         }),
       });
 

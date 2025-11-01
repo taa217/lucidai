@@ -73,7 +73,11 @@ export class WorkOSAuthController {
       return { authorizationUrl };
     } catch (error) {
       console.error('🔍 WorkOS - Error in GET /authorize:', error);
-      throw new BadRequestException('Failed to generate authorization URL');
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : 'Failed to generate authorization URL';
+      throw new BadRequestException(message);
     }
   }
 
@@ -106,7 +110,11 @@ export class WorkOSAuthController {
       return { authorizationUrl };
     } catch (error) {
       console.error('Error generating authorization URL:', error);
-      throw new BadRequestException('Failed to generate authorization URL');
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : 'Failed to generate authorization URL';
+      throw new BadRequestException(message);
     }
   }
 
@@ -148,7 +156,11 @@ export class WorkOSAuthController {
       return result;
     } catch (error) {
       console.error('Error handling auth callback:', error);
-      throw new BadRequestException('Authentication callback failed');
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : 'Authentication callback failed';
+      throw new BadRequestException(message);
     }
   }
 
