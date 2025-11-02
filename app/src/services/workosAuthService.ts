@@ -30,8 +30,7 @@ class WorkOSAuthService {
 
   constructor() {
     this.clientId = process.env.REACT_APP_WORKOS_CLIENT_ID || '';
-    const configuredBaseUrl = process.env.REACT_APP_WORKOS_BASE_URL || process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001';
-    this.baseUrl = configuredBaseUrl.replace(/\/+$/, '');
+    this.baseUrl = this.resolveBaseUrl();
     this.callbackPath = this.normalizeCallbackPath(process.env.REACT_APP_WORKOS_CALLBACK_PATH);
     this.allowedRedirectUris = this.buildAllowedRedirectUris();
     this.normalizedAllowedRedirectUris = this.allowedRedirectUris.map((uri) => this.normalizeForComparison(uri));
@@ -40,6 +39,67 @@ class WorkOSAuthService {
     if (!this.clientId) {
       console.error('REACT_APP_WORKOS_CLIENT_ID is required');
     }
+  }
+
+  private getRuntimeOrigin(): string | null {
+    if (typeof window === 'undefined' || !window.location?.origin) {
+      return null;
+    }
+    return window.location.origin.replace(/\/+$/, '');
+  }
+
+  private isLocalhostOrigin(origin: string): boolean {
+    return /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
+  }
+
+  private normalizeBaseUrl(value: string, runtimeOrigin: string | null): string | null {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return null;
+    }
+
+    if (/^https?:\/\//i.test(trimmed)) {
+      return trimmed.replace(/\/+$/, '');
+    }
+
+    if (trimmed.startsWith('//')) {
+      const protocol = runtimeOrigin?.startsWith('https://') ? 'https:' : 'http:';
+      return `${protocol}${trimmed}`.replace(/\/+$/, '');
+    }
+
+    if (trimmed.startsWith('/')) {
+      const normalizedPath = trimmed.replace(/\/+$/, '') || '/';
+      if (runtimeOrigin) {
+        return `${runtimeOrigin}${normalizedPath === '/' ? '' : normalizedPath}`;
+      }
+      return normalizedPath === '/' ? '' : normalizedPath;
+    }
+
+    if (runtimeOrigin) {
+      return `${runtimeOrigin}/${trimmed.replace(/^\/+/, '').replace(/\/+$/, '')}`;
+    }
+
+    return `/${trimmed.replace(/^\/+/, '').replace(/\/+$/, '')}`;
+  }
+
+  private resolveBaseUrl(): string {
+    const runtimeOrigin = this.getRuntimeOrigin();
+    const envBaseCandidate =
+      process.env.REACT_APP_WORKOS_BASE_URL || process.env.REACT_APP_API_BASE_URL || '';
+
+    const envResolved = envBaseCandidate
+      ? this.normalizeBaseUrl(envBaseCandidate, runtimeOrigin)
+      : null;
+
+    if (envResolved) {
+      return envResolved;
+    }
+
+    if (runtimeOrigin && !this.isLocalhostOrigin(runtimeOrigin)) {
+      return runtimeOrigin;
+    }
+
+    return 'http://localhost:3001';
   }
 
   private normalizeCallbackPath(path?: string): string {
