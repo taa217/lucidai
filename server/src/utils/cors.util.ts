@@ -10,6 +10,7 @@ const DEFAULT_CORS_ORIGINS: (string | RegExp)[] = [
   /^http:\/\/172\.\d+\.\d+\.\d+:(19000|19006|8081)$/,
   /^http:\/\/127\.0\.0\.1:\d+$/,
   /^https:\/\/[a-z0-9-]+\.vercel\.app$/,
+  /^https:\/\/([a-z0-9-]+\.)?lucid-ai\.co$/i,
 ];
 
 const asOrigin = (value?: string | null): string | null => {

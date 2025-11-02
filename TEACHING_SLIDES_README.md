@@ -68,6 +68,7 @@ cd app && npm i @babel/standalone --save
 ### 🔐 WorkOS Auth Callback CORS Hardening — FIXED (Latest)
 - Problem: WorkOS redirects succeeded, but the final callback request from `https://lucid-ai.co` to the NestJS backend failed with browser `TypeError: Failed to fetch` because the custom domain was not whitelisted for CORS and some deployments still pointed the web app at `http://localhost:3001`.
 - Fix: Added a shared `buildCorsOrigins` helper so both the Node server (`main.ts`) and the Vercel serverless entrypoint (`api/index.ts`) automatically import origins from env (`CORS_ORIGIN(S)`, `FRONTEND_URL`, `WORKOS_REDIRECT_URI`, `WORKOS_ALLOWED_REDIRECT_URIS`, Vercel production URLs). Updated the React `workosAuthService` to resolve its base URL intelligently—preferring env values, then the runtime origin for production, with a guarded localhost fallback for dev.
+- Update: `buildCorsOrigins` now ships with a default allow-list regex for `https://lucid-ai.co` (and subdomains) so the production custom domain is covered even if env vars lag behind a domain change.
 - Impact: The WorkOS callback and session validation complete successfully on Vercel custom domains without manual CORS tweaks. Production users now land in the app instead of the error card.
 
 ### 🌐 Backend on Vercel (serverless) — FIXED (Latest)
