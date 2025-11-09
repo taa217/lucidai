@@ -44,7 +44,7 @@ export const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
                   onClick={() => handleItemClick(item)}
                   className={cn(
                     "group flex w-full items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200",
-                    "bg-primary-600 text-white hover:bg-primary-700"
+                    "bg-accent-500 text-primary-500 hover:bg-accent-600 font-semibold"
                   )}
                 >
                   <item.icon className={cn("h-5 w-5 flex-shrink-0", !collapsed && "mr-3")} />

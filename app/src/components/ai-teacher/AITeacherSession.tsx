@@ -193,7 +193,7 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={startStreaming}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            className="px-4 py-2 bg-accent-500 text-primary-500 rounded-lg hover:bg-accent-600 transition-colors font-semibold"
           >
             Try Again
           </button>
@@ -269,7 +269,7 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
               <div className="flex space-x-3 justify-center">
                 <button
                   onClick={replayLesson}
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                  className="px-4 py-2 bg-accent-500 text-primary-500 rounded-lg hover:bg-accent-600 transition-colors font-semibold"
                 >
                   Replay Lesson
                 </button>

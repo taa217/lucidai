@@ -287,11 +287,11 @@ export const UploadModal: React.FC<UploadModalProps> = ({
           <button
             onClick={handleUpload}
             disabled={!file || isUploading}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+            className="px-4 py-2 bg-accent-500 text-primary-500 rounded-lg hover:bg-accent-600 disabled:bg-secondary-300 disabled:cursor-not-allowed transition-colors flex items-center space-x-2 font-semibold"
           >
             {isUploading ? (
               <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-500"></div>
                 <span>Uploading...</span>
               </>
             ) : (

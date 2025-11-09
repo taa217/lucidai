@@ -183,7 +183,7 @@ export const Library: React.FC = () => {
         <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
         <button
           onClick={fetchDocuments}
-          className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+          className="px-4 py-2 bg-accent-500 text-primary-500 rounded-lg hover:bg-accent-600 transition-colors font-semibold"
         >
           Try Again
         </button>
@@ -303,7 +303,7 @@ export const Library: React.FC = () => {
            ) : (
              <button
                onClick={() => setIsUploadModalOpen(true)}
-               className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+               className="px-4 py-2 bg-accent-500 text-primary-500 rounded-lg hover:bg-accent-600 transition-colors font-semibold"
              >
                Upload Document
              </button>

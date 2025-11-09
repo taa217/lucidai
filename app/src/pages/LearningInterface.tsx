@@ -160,7 +160,7 @@ export const LearningInterface: React.FC = () => {
         className="text-center w-full max-w-4xl mx-auto flex flex-col items-center"
       >
         {/* Main prompt text */}
-        <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-12 text-center">
+        <h1 className="text-4xl font-bold text-primary-500 dark:text-neutral-50 mb-12 text-center">
           What do you want to learn?
         </h1>
 
@@ -168,7 +168,7 @@ export const LearningInterface: React.FC = () => {
         <form onSubmit={handleSubmit} className="w-full max-w-3xl flex justify-center">
           <div className="relative w-full">
             {/* Input field with integrated mode selection */}
-            <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 w-full">
+            <div className="bg-white dark:bg-primary-700 border border-secondary-300 dark:border-secondary-600 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 w-full">
               {/* Input row */}
               <div className="flex items-center px-6 py-4">
                 <input
@@ -176,7 +176,7 @@ export const LearningInterface: React.FC = () => {
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   placeholder="Ask anything. Type @ for mentions and / for shortcuts."
-                  className="flex-1 outline-none text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-lg min-w-0 bg-transparent"
+                  className="flex-1 outline-none text-primary-500 dark:text-neutral-50 placeholder-secondary-400 dark:placeholder-secondary-500 text-lg min-w-0 bg-transparent"
                 />
                 {selectedMode === 'read' && (
                   <>
@@ -201,7 +201,7 @@ export const LearningInterface: React.FC = () => {
                 <button
                   type="submit"
                   disabled={selectedMode === 'read' || !inputValue.trim()}
-                  className="p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 ml-4"
+                  className="p-2 bg-accent-500 text-primary-500 rounded-lg hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 ml-4 font-semibold"
                 >
                   <Send className="h-5 w-5" />
                 </button>
@@ -209,15 +209,15 @@ export const LearningInterface: React.FC = () => {
               
               {/* Mode selection icons at bottom, aligned to left - reduced height */}
               <div className="flex items-center px-6 pb-1">
-                <div className="flex items-center space-x-1 bg-gray-50 dark:bg-gray-700 rounded-lg px-2 py-1">
+                <div className="flex items-center space-x-1 bg-neutral-100 dark:bg-primary-700 rounded-lg px-2 py-1">
                   {/* Interactive Mode */}
                   <button
                     onClick={() => handleModeChange('interactive')}
                     title="Interactive"
                     className={`p-2 rounded-md transition-all duration-200 ${
                       selectedMode === 'interactive'
-                        ? 'bg-primary-100 dark:bg-primary-900/20 border border-primary-300 dark:border-primary-600 text-primary-700 dark:text-primary-300'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600'
+                        ? 'bg-accent-100 dark:bg-accent-900/20 border border-accent-300 dark:border-accent-600 text-accent-700 dark:text-accent-300'
+                        : 'text-secondary-500 dark:text-secondary-400 hover:text-accent-600 dark:hover:text-accent-400 hover:bg-accent-50 dark:hover:bg-accent-900/10'
                     }`}
                   >
                     <Play className="h-4 w-4" />
@@ -229,8 +229,8 @@ export const LearningInterface: React.FC = () => {
                     title="Read"
                     className={`p-2 rounded-md transition-all duration-200 ${
                       selectedMode === 'read'
-                        ? 'bg-primary-100 dark:bg-primary-900/20 border border-primary-300 dark:border-primary-600 text-primary-700 dark:text-primary-300'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600'
+                        ? 'bg-accent-100 dark:bg-accent-900/20 border border-accent-300 dark:border-accent-600 text-accent-700 dark:text-accent-300'
+                        : 'text-secondary-500 dark:text-secondary-400 hover:text-accent-600 dark:hover:text-accent-400 hover:bg-accent-50 dark:hover:bg-accent-900/10'
                     }`}
                   >
                     <BookOpen className="h-4 w-4" />
@@ -240,11 +240,7 @@ export const LearningInterface: React.FC = () => {
                   <button
                     onClick={() => handleModeChange('research')}
                     title="Research"
-                    className={`p-2 rounded-md transition-all duration-200 ${
-                      false
-                        ? 'bg-primary-100 dark:bg-primary-900/20 border border-primary-300 dark:border-primary-600 text-primary-700 dark:text-primary-300'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600'
-                    }`}
+                    className="p-2 rounded-md transition-all duration-200 text-secondary-500 dark:text-secondary-400 hover:text-accent-600 dark:hover:text-accent-400 hover:bg-accent-50 dark:hover:bg-accent-900/10"
                   >
                     <Brain className="h-4 w-4" />
                   </button>
@@ -255,7 +251,7 @@ export const LearningInterface: React.FC = () => {
         </form>
 
         {/* Optional subtitle */}
-        <p className="mt-8 text-gray-600 dark:text-gray-400 text-lg text-center">
+        <p className="mt-8 text-secondary-500 dark:text-secondary-400 text-lg text-center">
           Start your learning journey with AI-powered assistance
         </p>
       </motion.div>

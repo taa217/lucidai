@@ -33,7 +33,7 @@ export const ResearchPanel: React.FC<ResearchPanelProps> = ({ apiBase, baseHeade
       .replace(/`([^`]+)`/g, '<code class="px-1 py-0.5 bg-gray-100 rounded">$1<\/code>')
       .replace(/\n-\s(.+)/g, '<br/><span class="inline-block pl-4">• $1<\/span>')
       .replace(/\n\n/g, '<br/><br/>')
-      .replace(/\[(.*?)\]\((https?:[^\)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer" class="text-primary-600 hover:underline">$1<\/a>')
+      .replace(/\[(.*?)\]\((https?:[^\)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer" class="text-accent-600 hover:text-accent-700 hover:underline">$1<\/a>')
     return <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: html }} />
   }
 
@@ -175,7 +175,7 @@ export const ResearchPanel: React.FC<ResearchPanelProps> = ({ apiBase, baseHeade
           <div className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-200 w-full">
             <div className="flex items-center px-6 py-4">
               <input type="text" value={inputValue} onChange={(e) => setInputValue(e.target.value)} placeholder={isResearching ? 'Waiting for answer…' : 'Ask a follow-up question'} className="flex-1 outline-none text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 text-lg min-w-0 bg-transparent" disabled={isResearching} />
-              <button type="submit" disabled={!inputValue.trim() || isResearching} className="p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 ml-4">
+              <button type="submit" disabled={!inputValue.trim() || isResearching} className="p-2 bg-accent-500 text-primary-500 rounded-lg hover:bg-accent-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 ml-4 font-semibold">
                 Send
               </button>
             </div>
