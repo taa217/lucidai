@@ -124,7 +124,7 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
       updated.currentEvent = event
       return updated
     })
-  }, [topic, userId])
+  }, [topic, userId, requestPlay])
 
   const replayLesson = useCallback(() => { 
     replay() 

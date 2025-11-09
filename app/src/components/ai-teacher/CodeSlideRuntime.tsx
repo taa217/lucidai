@@ -151,13 +151,13 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
         const Component = await execCompiled(compiled, env)
         setLessonComponent(() => Component)
         usingFixedOverrideRef.current = true
-        if (!hasRenderedOnce) setHasRenderedOnce(true)
+        if (!hasRenderedOnceRef.current) setHasRenderedOnce(true)
         setRenderError(null)
       } catch (e) {
         // Keep current fallback/last good if fixed compile fails
       }
     }
-  }, [onError, reportError])
+  }, [onError, reportError, buildEnv])
   // Build runtime env on demand using current refs
   const buildEnv = useCallback(() => createRuntimeEnvironment({
     getTimeSeconds: () => timeSecondsRef.current || 0,
