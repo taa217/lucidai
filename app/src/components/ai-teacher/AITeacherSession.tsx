@@ -127,9 +127,8 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
   }, [topic, userId])
 
   const replayLesson = useCallback(() => { 
-    if (requestPlay) requestPlay()
     replay() 
-  }, [replay, requestPlay])
+  }, [replay])
 
   // Handle render errors from CodeSlideRuntime
   const handleRenderError = useCallback((error: Error) => {
