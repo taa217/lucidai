@@ -147,7 +147,12 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
     if (fixed) {
       try {
         const compiled = await compileTsxCode(fixed)
-        const env = buildEnv()
+        const env = createRuntimeEnvironment({
+          getTimeSeconds: () => timeSecondsRef.current || 0,
+          getTimeline: () => (timelineRef.current || []) as Array<{ at: number; event: string }>,
+          getTopic: () => topicRef.current,
+          getIsPlaying: () => !!isPlayingRef.current,
+        })
         const Component = await execCompiled(compiled, env)
         setLessonComponent(() => Component)
         usingFixedOverrideRef.current = true
@@ -157,14 +162,7 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
         // Keep current fallback/last good if fixed compile fails
       }
     }
-  }, [onError, reportError, buildEnv])
-  // Build runtime env on demand using current refs
-  const buildEnv = useCallback(() => createRuntimeEnvironment({
-    getTimeSeconds: () => timeSecondsRef.current || 0,
-    getTimeline: () => (timelineRef.current || []) as Array<{ at: number; event: string }>,
-    getTopic: () => topicRef.current,
-    getIsPlaying: () => !!isPlayingRef.current,
-  }), [])
+  }, [onError, reportError])
   
   // Memoize hasRenderedOnce to avoid unnecessary re-renders
   const hasRenderedOnceRef = useRef(hasRenderedOnce)
@@ -211,7 +209,12 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
           console.log('CodeSlideRuntime: Compiling AI code...')
           const compiled = await compileTsxCode(code)
           setCompiledJs(compiled)
-          const env = buildEnv()
+          const env = createRuntimeEnvironment({
+            getTimeSeconds: () => timeSecondsRef.current || 0,
+            getTimeline: () => (timelineRef.current || []) as Array<{ at: number; event: string }>,
+            getTopic: () => topicRef.current,
+            getIsPlaying: () => !!isPlayingRef.current,
+          })
           const Component = await execCompiled(compiled, env)
           setLessonComponent(() => Component) // Store the component function
           setComponentKey(k => k + 1)
@@ -239,7 +242,12 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
             try { console.log('CodeSlideRuntime: Received fixed code', { length: (fixed || '').length, head: (fixed || '').slice(0, 120) }) } catch {}
             try {
               const compiled2 = await compileTsxCode(fixed)
-              const env2 = buildEnv()
+              const env2 = createRuntimeEnvironment({
+                getTimeSeconds: () => timeSecondsRef.current || 0,
+                getTimeline: () => (timelineRef.current || []) as Array<{ at: number; event: string }>,
+                getTopic: () => topicRef.current,
+                getIsPlaying: () => !!isPlayingRef.current,
+              })
               const Component2 = await execCompiled(compiled2, env2)
               setLessonComponent(() => Component2)
               setComponentKey(k => k + 1)
@@ -273,7 +281,7 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
 
     processCode()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [code, babelReady, hasRenderedOnce, buildEnv])
+  }, [code, babelReady, hasRenderedOnce])
 
   // Watchdog: if compilation takes too long or Babel is slow, show cinematic fallback immediately
   useEffect(() => {
