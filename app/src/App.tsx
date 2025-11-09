@@ -8,7 +8,7 @@ import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import AuthCallback from './pages/AuthCallback'
-import { FileText, History, Star, Settings, BookOpen } from 'lucide-react'
+import { History, Star, Settings } from 'lucide-react'
 import { DocumentReader } from './pages/DocumentReader'
 
 function App() {

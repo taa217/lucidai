@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Play, Pause, RotateCcw, Volume2, VolumeX } from 'lucide-react'
+import { Play, Pause, RotateCcw, VolumeX } from 'lucide-react'
 import { CodeSlideRuntime } from './CodeSlideRuntime'
 import { TeacherEvent, TeacherSession } from '../../types'
 import { useAudioPlayer } from './hooks/useAudioPlayer'
@@ -126,7 +126,10 @@ export const AITeacherSession: React.FC<AITeacherSessionProps> = ({
     })
   }, [topic, userId])
 
-  const replayLesson = useCallback(() => { replay() }, [replay])
+  const replayLesson = useCallback(() => { 
+    if (requestPlay) requestPlay()
+    replay() 
+  }, [replay, requestPlay])
 
   // Handle render errors from CodeSlideRuntime
   const handleRenderError = useCallback((error: Error) => {

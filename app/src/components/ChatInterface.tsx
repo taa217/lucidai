@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Send, Bot, User, Loader2 } from 'lucide-react'
 import { apiService } from '../services/api'
 import { ChatMessage } from '../types'
@@ -30,25 +30,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Load chat history on mount
-  useEffect(() => {
-    // Only load history when we have a real UUID session id
-    const isUuid = (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
-    if (sessionId && isUuid(sessionId) && initialMessages.length === 0) {
-      loadChatHistory()
-    }
-  }, [sessionId])
-
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages])
-
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
+  }, [])
 
-  const loadChatHistory = async () => {
+  const loadChatHistory = useCallback(async () => {
     setIsLoadingHistory(true)
     try {
       const response = await apiService.getChatMessages(sessionId, 100)
@@ -60,7 +46,21 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     } finally {
       setIsLoadingHistory(false)
     }
-  }
+  }, [sessionId])
+
+  // Load chat history on mount
+  useEffect(() => {
+    // Only load history when we have a real UUID session id
+    const isUuid = (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+    if (sessionId && isUuid(sessionId) && initialMessages.length === 0) {
+      loadChatHistory()
+    }
+  }, [sessionId, initialMessages.length, loadChatHistory])
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages, scrollToBottom])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

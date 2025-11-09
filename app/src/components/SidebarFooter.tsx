@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { LogOut, Settings, SlidersHorizontal, User } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { LogOut, Settings, SlidersHorizontal } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { SettingsModal } from './SettingsModal'
 import { CustomizeLucidModal } from './CustomizeLucidModal'
@@ -24,7 +23,6 @@ export const SidebarFooter: React.FC<SidebarFooterProps> = ({
   collapsed = false
 }) => {
   const { logout } = useAuth()
-  const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [customizeOpen, setCustomizeOpen] = useState(false)

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
-import { FileText, Download, Share2, MessageSquare, Loader2, AlertCircle } from 'lucide-react'
+import { FileText, MessageSquare, Loader2, AlertCircle } from 'lucide-react'
 import { documentService } from '../services/documentService'
 import { apiService } from '../services/api'
 import { ChatInterface } from '../components/ChatInterface'
@@ -33,6 +33,7 @@ export const DocumentReader: React.FC = () => {
         loadChatHistory()
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [docId, user?.id, chatId])
 
   const loadDocument = async () => {
@@ -185,28 +186,6 @@ export const DocumentReader: React.FC = () => {
     }
   }
 
-  const handleShare = async () => {
-    if (navigator.share && document) {
-      try {
-        await navigator.share({
-          title: document.originalFilename,
-          text: `Check out this document: ${document.originalFilename}`,
-          url: window.location.href
-        })
-      } catch (error) {
-        console.error('Failed to share:', error)
-      }
-    } else {
-      // Fallback: copy to clipboard
-      try {
-        await navigator.clipboard.writeText(window.location.href)
-        // You could show a toast notification here
-        alert('Link copied to clipboard!')
-      } catch (error) {
-        console.error('Failed to copy to clipboard:', error)
-      }
-    }
-  }
 
   if (loading) {
     return (

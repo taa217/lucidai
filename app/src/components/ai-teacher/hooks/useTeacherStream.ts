@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
 import { apiService } from '../../../services/api'
-import { TeacherEvent, StreamLessonRequest, TeacherSession } from '../../../types'
+import { TeacherEvent, StreamLessonRequest } from '../../../types'
 
 export function useTeacherStream(params: {
   topic: string

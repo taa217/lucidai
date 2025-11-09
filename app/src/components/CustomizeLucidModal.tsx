@@ -37,7 +37,7 @@ export const CustomizeLucidModal: React.FC<CustomizeLucidModalProps> = ({ isOpen
         )
       }
       // If display name missing, try to prefill from profile even if language came back
-      if (!filled || !displayName) {
+      if (!filled) {
         const prof = await apiService.getProfile()
         if (prof.success && prof.data) {
           const profile = prof.data
@@ -48,6 +48,7 @@ export const CustomizeLucidModal: React.FC<CustomizeLucidModalProps> = ({ isOpen
     }
     fetchData()
     return () => { ignore = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
 
   const onSave = async () => {

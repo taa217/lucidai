@@ -84,6 +84,7 @@ export const useRecentSessions = (userId: string | null, limit: number = 10): Us
 
   useEffect(() => {
     fetchSessions()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, limit])
 
   return {

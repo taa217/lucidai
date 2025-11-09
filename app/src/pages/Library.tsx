@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, FileText, Download, Eye, Calendar, Tag, Grid, List, Upload } from 'lucide-react'
+import { Search, FileText, Grid, List, Upload } from 'lucide-react'
 import { documentService } from '../services/documentService'
 import { DocumentCard } from '../components/DocumentCard'
 import { UploadModal } from '../components/UploadModal'
@@ -8,7 +8,7 @@ import { useAuth } from '../contexts/AuthContext'
 import type { Document } from '../types'
 
 export const Library: React.FC = () => {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth()
+  const { user, isLoading: authLoading } = useAuth()
   const navigate = useNavigate()
   const [documents, setDocuments] = useState<Document[]>([])
   const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([])
@@ -19,17 +19,12 @@ export const Library: React.FC = () => {
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'size'>('date')
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
 
-  // Get current user ID from auth context
-  const getCurrentUserId = () => {
-    return user?.id || null
-  }
-
   // Fetch user documents
   const fetchDocuments = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
-      const userId = getCurrentUserId()
+      const userId = user?.id || null
       
       console.log('🔍 Debug - Fetching documents for user:', userId)
       console.log('🔍 Debug - User object:', user)
@@ -124,7 +119,7 @@ export const Library: React.FC = () => {
 
   // Update filtered documents when sort changes
   useEffect(() => {
-    setFilteredDocuments(sortDocuments(filteredDocuments, sortBy))
+    setFilteredDocuments(prev => sortDocuments(prev, sortBy))
   }, [sortBy, sortDocuments])
 
   // Load documents on component mount

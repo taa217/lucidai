@@ -1,6 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FileText, Download, Eye, Trash2, Calendar, Tag, MoreVertical } from 'lucide-react'
+import { Download, Eye, Trash2, Calendar, Tag } from 'lucide-react'
 import type { Document } from '../types'
 
 interface DocumentCardProps {

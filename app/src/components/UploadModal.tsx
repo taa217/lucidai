@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { X, Upload, FileText, Tag, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react'
+import { X, Upload, Tag, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react'
 import { documentService } from '../services/documentService'
 
 interface UploadModalProps {

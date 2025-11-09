@@ -16,24 +16,24 @@ export const ResearchPanel: React.FC<ResearchPanelProps> = ({ apiBase, baseHeade
   const [activeResearchTab, setActiveResearchTab] = useState<'answer' | 'sources'>('answer')
   const [researchAnswer, setResearchAnswer] = useState('')
   const [researchSources, setResearchSources] = useState<Source[]>([])
-  const [researchError, setResearchError] = useState<string | null>(null)
+  const [, setResearchError] = useState<string | null>(null)
   const [researchSessionId, setResearchSessionId] = useState<string | null>(null)
-  const [researchHistory, setResearchHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([])
+  const [, setResearchHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([])
   const [researchQuery, setResearchQuery] = useState<string>(initialQuestion || '')
   const [threads, setThreads] = useState<ResearchThread[]>([])
   const [inputValue, setInputValue] = useState('')
 
   const renderMarkdown = (text: string) => {
     const html = text
-      .replace(/^###\s(.+)$/gm, '<h3 class="text-lg font-semibold mt-4 mb-2">$1<\/h3>')
-      .replace(/^##\s(.+)$/gm, '<h2 class="text-xl font-bold mt-5 mb-3">$1<\/h2>')
-      .replace(/^#\s(.+)$/gm, '<h1 class="text-2xl font-bold mt-6 mb-4">$1<\/h1>')
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1<\/strong>')
-      .replace(/\*(.+?)\*/g, '<em>$1<\/em>')
-      .replace(/`([^`]+)`/g, '<code class="px-1 py-0.5 bg-gray-100 rounded">$1<\/code>')
-      .replace(/\n-\s(.+)/g, '<br/><span class="inline-block pl-4">• $1<\/span>')
+      .replace(/^###\s(.+)$/gm, '<h3 class="text-lg font-semibold mt-4 mb-2">$1</h3>')
+      .replace(/^##\s(.+)$/gm, '<h2 class="text-xl font-bold mt-5 mb-3">$1</h2>')
+      .replace(/^#\s(.+)$/gm, '<h1 class="text-2xl font-bold mt-6 mb-4">$1</h1>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/`([^`]+)`/g, '<code class="px-1 py-0.5 bg-gray-100 rounded">$1</code>')
+      .replace(/\n-\s(.+)/g, '<br/><span class="inline-block pl-4">• $1</span>')
       .replace(/\n\n/g, '<br/><br/>')
-      .replace(/\[(.*?)\]\((https?:[^\)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer" class="text-accent-600 hover:text-accent-700 hover:underline">$1<\/a>')
+      .replace(/\[(.*?)\]\((https?:[^)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer" class="text-accent-600 hover:text-accent-700 hover:underline">$1</a>')
     return <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: html }} />
   }
 
@@ -121,6 +121,7 @@ export const ResearchPanel: React.FC<ResearchPanelProps> = ({ apiBase, baseHeade
     if (initialQuestion && !threads.length && !isResearching) {
       startResearch(initialQuestion)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialQuestion])
 
   return (

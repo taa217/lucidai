@@ -2,12 +2,9 @@ import { apiService } from './api'
 import type { 
   Document, 
   DocumentCollection, 
-  CreateDocumentDto, 
   UpdateDocumentDto,
   CreateCollectionDto,
   UpdateCollectionDto,
-  SearchDocumentsRequest,
-  DocumentApiResponse,
   BackendDocument
 } from '../types'
 

@@ -52,6 +52,7 @@ export const useRecentDocuments = (userId: string | null, limit: number = 2): Us
 
   useEffect(() => {
     fetchDocuments()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, limit])
 
   return {

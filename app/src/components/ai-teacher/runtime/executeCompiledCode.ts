@@ -7,6 +7,7 @@ export async function executeCompiledCode(compiledJsCode: string, env: Record<st
     const module = { exports: {} as any }
     const exports = module.exports
 
+    // eslint-disable-next-line no-new-func
     const componentFactory = new Function(
       ...Object.keys(env),
       'module',

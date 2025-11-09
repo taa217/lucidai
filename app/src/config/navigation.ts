@@ -5,15 +5,12 @@ import {
   FileText,
   Star,
   Settings,
-  ChevronDown,
-  ChevronRight,
   MessageSquare,
   Search,
   File,
   Image,
   Video,
-  Music,
-  FileType
+  Music
 } from 'lucide-react'
 import { NavigationItem, NavigationSection } from '../types/navigation'
 import { RecentSession, Document, DocumentType } from '../types'

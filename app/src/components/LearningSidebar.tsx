@@ -15,8 +15,8 @@ export const LearningSidebar: React.FC<LearningSidebarProps> = ({
   setSidebarOpen
 }) => {
   const { user } = useAuth()
-  const { sessions, loading: sessionsLoading } = useRecentSessions(user?.id || null, 10)
-  const { documents, loading: documentsLoading } = useRecentDocuments(user?.id || null, 2)
+  const { sessions } = useRecentSessions(user?.id || null, 10)
+  const { documents } = useRecentDocuments(user?.id || null, 2)
   const [collapsed, setCollapsed] = useState(false)
   
   const userName = user?.fullName || user?.email || "User"

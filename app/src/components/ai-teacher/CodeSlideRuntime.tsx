@@ -47,7 +47,7 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
   onError,
   onRenderComplete
 }) => {
-  const [compiledJs, setCompiledJs] = useState<string | null>(null)
+  const [, setCompiledJs] = useState<string | null>(null)
   const [renderError, setRenderError] = useState<RuntimeError | null>(null)
   const [isCompiling, setIsCompiling] = useState(false)
   const [isFixing, setIsFixing] = useState(false)
@@ -64,7 +64,6 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
 
   const lastErrorHashRef = useRef<string>('')
   const lastReportTimeRef = useRef<number>(0)
-  const isInitializedRef = useRef<boolean>(false)
   const usingFixedOverrideRef = useRef<boolean>(false)
   const prevCodeRef = useRef<string | null>(null)
 
@@ -166,6 +165,12 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
     getTopic: () => topicRef.current,
     getIsPlaying: () => !!isPlayingRef.current,
   }), [])
+  
+  // Memoize hasRenderedOnce to avoid unnecessary re-renders
+  const hasRenderedOnceRef = useRef(hasRenderedOnce)
+  useEffect(() => {
+    hasRenderedOnceRef.current = hasRenderedOnce
+  }, [hasRenderedOnce])
 
   // Main compilation and component management effect
   useEffect(() => {
@@ -267,7 +272,8 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
     }
 
     processCode()
-  }, [code, babelReady, hasRenderedOnce])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, babelReady, hasRenderedOnce, buildEnv])
 
   // Watchdog: if compilation takes too long or Babel is slow, show cinematic fallback immediately
   useEffect(() => {
@@ -282,7 +288,8 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
       }
     }, 2000)
     return () => { cancelled = true; clearTimeout(timeout) }
-  }, [code, LessonComponent, FallbackVisuals, hasRenderedOnce])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [code, LessonComponent, hasRenderedOnce])
 
   // On runtime/render errors, immediately swap to fallback visuals instead of error box
   useEffect(() => {
@@ -292,7 +299,8 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
       }
       // After first render, keep last good component while fixer runs
     }
-  }, [renderError, isFixing, FallbackVisuals, hasRenderedOnce])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [renderError, isFixing, hasRenderedOnce])
 
 
   // Effect to initialize React Root once and render the current LessonComponent
@@ -331,7 +339,8 @@ export const CodeSlideRuntime: React.FC<CodeSlideRuntimeProps> = ({
         </div>
       );
     }
-  }, [LessonComponent, componentProps, isCompiling, renderError, handleDynamicComponentError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [LessonComponent, componentProps, isCompiling, renderError, handleDynamicComponentError, componentKey, timeSeconds]);
 
 
   // Cleanup effect for React Root
