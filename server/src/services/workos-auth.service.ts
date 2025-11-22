@@ -355,6 +355,16 @@ export class WorkOSAuthService {
 
     const normalized = this.normalizeForComparison(redirectUri);
     if (!this.normalizedAllowedRedirectUris.includes(normalized)) {
+      // Allow known production domains automatically
+      try {
+        const url = new URL(redirectUri);
+        if (url.hostname.endsWith('lucid-ai.co') || url.hostname === 'lucid-ai.co') {
+          return redirectUri;
+        }
+      } catch (e) {
+        // Ignore URL parsing errors
+      }
+
       throw new Error(
         `Redirect URI "${redirectUri}" is not allowed. Update WORKOS_ALLOWED_REDIRECT_URIS to include it.`
       );

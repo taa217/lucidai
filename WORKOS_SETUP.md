@@ -26,9 +26,9 @@ This guide will help you set up WorkOS AuthKit authentication for the Lucid app,
 2. Add the redirect URIs for every environment that can initiate auth:
    - **Development**: `http://localhost:3000/auth/callback`
    - **Preview / Staging**: e.g. `https://lucidai-eight.vercel.app/auth/callback`
-   - **Custom domain**: e.g. `https://lucid-ai.co/auth/callback`
+   - **Custom domain**: e.g. `https://app.lucid-ai.co/auth/callback`
 3. Set the **Login endpoint** to your deployed backend, for example `https://lucidai-m3m2.vercel.app/auth/workos/authorize`
-4. Add logout targets that match the same origins, such as `https://lucid-ai.co`
+4. Add logout targets that match the same origins, such as `https://app.lucid-ai.co`
 
 ### 1.3 Get Your Credentials
 
@@ -93,11 +93,11 @@ Create a `.env` file in the `app` directory with the following variables:
 # WorkOS Configuration
 REACT_APP_WORKOS_CLIENT_ID=client_your_workos_client_id_here
 REACT_APP_WORKOS_BASE_URL=http://localhost:3001
-REACT_APP_WORKOS_ALLOWED_REDIRECT_URIS=http://localhost:3000/auth/callback,https://lucidai-eight.vercel.app/auth/callback,https://lucid-ai.co/auth/callback
+REACT_APP_WORKOS_ALLOWED_REDIRECT_URIS=http://localhost:3000/auth/callback,https://lucidai-eight.vercel.app/auth/callback,https://app.lucid-ai.co/auth/callback
 REACT_APP_WORKOS_CALLBACK_PATH=/auth/callback
 
 # Optional: fallback redirect if you prefer a single static value
-# REACT_APP_WORKOS_REDIRECT_URI=https://lucid-ai.co/auth/callback
+# REACT_APP_WORKOS_REDIRECT_URI=https://app.lucid-ai.co/auth/callback
 ```
 
 > The frontend automatically prefers the current browser origin when it matches the allow list, so the same build can serve every approved domain without rebuilds.
@@ -197,9 +197,9 @@ For production, update the environment variables:
 WORKOS_API_KEY=sk_live_your_production_api_key
 WORKOS_CLIENT_ID=client_your_production_client_id
 WORKOS_COOKIE_PASSWORD=your_production_cookie_password
-WORKOS_REDIRECT_URI=https://lucid-ai.co/auth/callback
-FRONTEND_URL=https://lucid-ai.co
-WORKOS_ALLOWED_REDIRECT_URIS=https://lucid-ai.co/auth/callback,https://lucidai-eight.vercel.app/auth/callback
+WORKOS_REDIRECT_URI=https://app.lucid-ai.co/auth/callback
+FRONTEND_URL=https://app.lucid-ai.co
+WORKOS_ALLOWED_REDIRECT_URIS=https://app.lucid-ai.co/auth/callback,https://lucidai-eight.vercel.app/auth/callback
 ```
 
 ### 7.2 Update WorkOS Dashboard

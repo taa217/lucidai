@@ -157,6 +157,17 @@ class WorkOSAuthService {
         return runtimeRedirect;
       }
 
+      // Allow known production domains automatically to prevent strict-matching errors
+      // when environment variables haven't been updated for a new subdomain.
+      try {
+        const url = new URL(runtimeRedirect);
+        if (url.hostname.endsWith('lucid-ai.co') || url.hostname === 'lucid-ai.co') {
+          return runtimeRedirect;
+        }
+      } catch (e) {
+        // Ignore URL parsing errors
+      }
+
       console.warn(
         '[WorkOS] Runtime redirect URI is not in the configured allow list. Falling back to first allowed URI.',
         {

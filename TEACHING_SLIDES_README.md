@@ -65,11 +65,35 @@ cd app && npm i @babel/standalone --save
 
 ## Recent Updates (Latest)
 
+### 🔐 WorkOS Domain Migration (App Subdomain) — FIXED (Latest)
+- **Problem**: Moving the web app to `app.lucid-ai.co` caused "Invalid redirect URI" errors. Frontend and Backend code strictly validated redirect URIs against a hardcoded env list, causing valid new subdomains to fall back to incorrect values (e.g. `localhost` or old domain) before reaching WorkOS.
+- **Code Fix**:
+  - Updated `app/src/services/workosAuthService.ts` (Frontend) to automatically trust `*.lucid-ai.co` domains.
+  - Updated `server/src/services/workos-auth.service.ts` (Backend) to automatically trust `*.lucid-ai.co` domains.
+  - This ensures `app.lucid-ai.co` is passed correctly to WorkOS without requiring immediate env var updates, provided the URL is whitelisted in the WorkOS Dashboard.
+- **Impact**: Login flow now supports the new subdomain structure natively.
+
 ### 🔐 WorkOS Auth Callback CORS Hardening — FIXED (Latest)
 - Problem: WorkOS redirects succeeded, but the final callback request from `https://lucid-ai.co` to the NestJS backend failed with browser `TypeError: Failed to fetch` because the custom domain was not whitelisted for CORS and some deployments still pointed the web app at `http://localhost:3001`.
 - Fix: Added a shared `buildCorsOrigins` helper so both the Node server (`main.ts`) and the Vercel serverless entrypoint (`api/index.ts`) automatically import origins from env (`CORS_ORIGIN(S)`, `FRONTEND_URL`, `WORKOS_REDIRECT_URI`, `WORKOS_ALLOWED_REDIRECT_URIS`, Vercel production URLs). Updated the React `workosAuthService` to resolve its base URL intelligently—preferring env values, then the runtime origin for production, with a guarded localhost fallback for dev.
 - Update: `buildCorsOrigins` now ships with a default allow-list regex for `https://lucid-ai.co` (and subdomains) so the production custom domain is covered even if env vars lag behind a domain change.
 - Impact: The WorkOS callback and session validation complete successfully on Vercel custom domains without manual CORS tweaks. Production users now land in the app instead of the error card.
+
+### 🚀 Lucid "SOTA" Marketing Site Architecture — UPGRADED (Latest)
+- **Architecture Overhaul**: Migrated `website/` from a single `App.tsx` to a scalable React Router architecture with `framer-motion` for page transitions.
+- **Simplified Routing**:
+  - `/` (Home): The "Impressive" hero, 3D glass demo, **Knowledge Engine Bento Grid** (merged from /method), and Explore teaser.
+  - `/explore` (Explore): A dedicated gallery of live interactive lesson examples (Calculus, History, Physics, CS).
+  - removed `/method` as a separate page to reduce friction.
+- **Visual & UX Upgrades**:
+  - **SOTA Animations**: Implemented staggered entrance animations (`framer-motion`) for all text, cards, and badges.
+  - **Lucid Palette Compliance**: Switched the entire marketing site to the official light palette (`Cloud Gray` backgrounds, Midnight Blue text, Electric Teal buttons) with subtle slate gradients and teal bokeh.
+  - **Advanced Glassmorphism**: Refined `App.css` with high-performance `backdrop-filter`, glows, and noise textures.
+  - **Theme Toggle**: Reintroduced a light/dark toggle in the navbar; dark mode uses Midnight Blue bases with Electric Teal highlights, matching investor decks.
+- **Interactive Demo**:
+  - Hero "Generate" button now triggers a fully animated biogas lesson with a digester dashboard, methane slider, moving bubbles, gas meter, and clickable timeline.
+  - Smooth scroll, synthesized narration (Web Speech API), and rotating insight cards make it feel like a YouTube-quality walkthrough even before a real screen recording is captured.
+- **Status**: Production-ready frontend architecture. Ready for deployment.
 
 ### 🌐 Backend on Vercel (serverless) — FIXED (Latest)
 - Added `server/api/index.ts` serverless handler that boots the Nest app via `ExpressAdapter` and exports a default function for Vercel.
