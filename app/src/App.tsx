@@ -10,6 +10,16 @@ import ProtectedRoute from './components/ProtectedRoute'
 import AuthCallback from './pages/AuthCallback'
 import { History, Star, Settings } from 'lucide-react'
 import { DocumentReader } from './pages/DocumentReader'
+import { workosAuthService } from './services/workosAuthService'
+
+// Log WorkOS configuration on startup
+if (typeof window !== 'undefined') {
+  console.log('🔍 WorkOS Frontend Config:', {
+    origin: window.location.origin,
+    calculatedRedirectUri: workosAuthService.getRedirectUri(),
+    baseUrl: workosAuthService.getBaseUrl(),
+  });
+}
 
 function App() {
   return (
