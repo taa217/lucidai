@@ -45,34 +45,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     // Redirect to WorkOS custom login endpoint using runtime-safe redirect URI
     const redirectUri = workosAuthService.getRedirectUri();
     const loginUrl = `${workosAuthService.getBaseUrl()}/auth/workos/authorize?redirectUri=${encodeURIComponent(redirectUri)}`;
-    
-    // DEBUG: Pause redirect to show what's being generated
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50">
-        <div className="max-w-md w-full bg-white p-6 rounded-lg shadow-lg break-words">
-          <h2 className="text-xl font-bold text-red-600 mb-4">Authentication Redirect Debug</h2>
-          <div className="text-sm space-y-4">
-             <div>
-               <p className="font-semibold">Calculated Redirect URI:</p>
-               <code className="block bg-gray-100 p-2 rounded mt-1">{redirectUri}</code>
-             </div>
-             <div>
-               <p className="font-semibold">Full Login URL:</p>
-               <code className="block bg-gray-100 p-2 rounded mt-1">{loginUrl}</code>
-             </div>
-             <div className="pt-4">
-               <p className="text-gray-600 mb-2">Please check if the "Calculated Redirect URI" above matches EXACTLY what is in your WorkOS Dashboard.</p>
-               <button 
-                 onClick={() => window.location.href = loginUrl}
-                 className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors"
-               >
-                 Proceed to Login
-               </button>
-             </div>
-          </div>
-        </div>
-      </div>
-    );
+    window.location.href = loginUrl;
+    return null;
   }
 
   return <>{children}</>;
